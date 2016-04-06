@@ -22,7 +22,7 @@
  *                            and which days are weekend days.
  *                            The character is position 1 is sunday
  *                            and 'N' = weekend day, 'Y' = week day
- * EndDate         Date       The resultant end date
+ *  EndDate         Date      The resultant end date
  */
 function AddDays(day , days, WeekMask ) {
   var NumWorkDays = 0;
@@ -40,8 +40,8 @@ function AddDays(day , days, WeekMask ) {
   var WMask = 'YYYYYYY';
   /* local copy of WeekMask with default
    value - No weekends */
-  var direct
-  number = 1;
+  var direct;
+  var mydays = 1;
   var dout;
 
   /* copy Weekmask to local variable if it is defined, otherwise
@@ -52,12 +52,13 @@ function AddDays(day , days, WeekMask ) {
   }
   ;
   if (WeekMask) {
-    WMask = WeekMask
+    WMask = WeekMask;
   }
   ;
   for (CurDow = 1; CurDow <= 7; CurDow++) { /* go through mask counting work days */
-    if (substr(WMask, CurDow, 1) = 'Y') { /* if a weekday, count it*/
-      WorkDaysPerWeek = WorkDaysPerWeek + 1
+//    if (substr(WMask, CurDow, 1) = 'Y') { /* if a weekday, count it*/
+    if (WMask.substr(CurDow,1) == 'Y') { /* if a weekday, count it*/
+      WorkDaysPerWeek = WorkDaysPerWeek + 1;
     }
   }
   /* determine number of Full weeks (7-day calendar) */
@@ -66,7 +67,7 @@ function AddDays(day , days, WeekMask ) {
    then decrement the number of Full Weeks so that the
    iterative process will operate on the last week.  This is
    done so that weekend days are not used as ending days */
-  if (FullWeeks && days % WorkDaysPerWeek = 0) {
+  if (FullWeeks && days%WorkDaysPerWeek == 0) {
     FullWeeks = FullWeeks - direct;
   }
   /* Compute number of working days found so far */
@@ -76,14 +77,15 @@ function AddDays(day , days, WeekMask ) {
   CurDow = to_number(to_char(day + FullWeeks * 7, 'D'));
   NumWorkDays = NumWorkDays - direct;
   while (NumWorkDays != days) {
-    if (substr(WMask, CurDow, 1) = 'Y') {
+    if (WMask.substr(CurDow, 1) == 'Y') {
       NumWorkDays = NumWorkDays + direct;
     }
     /*  If NumWorkDays = days then exit; end if; */
     LastPartial = LastPartial + direct;
-    CurDow = (CurDow + direct + 6 % 7) + 1;
+    CurDow = (CurDow + direct + (6 % 7)) + 1;
   }
   dout = day + FullWeeks * 7 + LastPartial;
+  return dout;
   /* end date is number
    weeks * 7 plus
    number of additional days*/
@@ -95,12 +97,12 @@ function AddDays(day , days, WeekMask ) {
  start date.  */
 function AddWorkDays(cal_id, start_date, Wdays,WeekMask) {
   var Cursdt = start_date;
-  var Enddt;
   var NumWDays = 0;
   var CurWdays = Wdays;
   var WMask = 'YYYYYYY';
   var EndInside = false;
   var endDate;
+  var Enddt;
 
   if (WeekMask) {
     WMask = WeekMask
@@ -124,5 +126,6 @@ loop {
   }
   ;
 }
-endDate := Enddt;
+  endDate := Enddt;
+  return endDate;
 }
