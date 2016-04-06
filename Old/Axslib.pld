@@ -1,0 +1,242 @@
+
+
+procedure delete_module_info (aUsername in char) is
+begin
+
+  delete from user_module_details
+  where username = aUsername
+  and modification_date is null;
+
+  delete from user_modules um
+  where um.username = aUsername
+  and um.modification_date is null
+  and not exists (select 1
+                  from user_module_details umd
+                  where umd.username = um.username
+                  and   umd.module_name = um.module_name);
+
+end;
+
+
+procedure process_user_update (
+   aUser in char) is
+begin
+declare
+  cursor get_dba_role_privs is
+    select granted_role
+    from sys.dba_role_privs
+    where grantee = aUser;
+  rname     sys.dba_role_privs.granted_role%type;
+  role_row  get_dba_role_privs%rowtype;
+
+begin
+  
+  delete_module_info(aUser);
+
+  for role_row in get_dba_role_privs loop
+
+    rname := role_row.granted_role;
+    update_user_access(aUser, rname);
+  end loop; 
+
+  upd_user_options(aUser);
+
+end;
+end;
+
+
+procedure update_user_access(
+  aUsername in char,
+  aRolename in char) is
+begin
+
+declare
+  
+  update_umd_flag char(1) := 'N';
+
+  cursor get_role_modules is
+    select rm.module_name, rm.insert_allowed_flag, rm.update_allowed_flag,
+           rm.delete_allowed_flag, rm.query_only
+    from role_modules rm
+    where rm.role = aRolename;
+
+    role_modules_row  get_role_modules%rowtype;
+    aModule_name      role_modules_row.module_name%type;
+    aRM_insert_flag   role_modules_row.insert_allowed_flag%type;
+    aRM_update_flag   role_modules_row.update_allowed_flag%type;
+    aRM_delete_flag   role_modules_row.delete_allowed_flag%type;
+    aRM_q_only_flag   role_modules_row.query_only%type;
+    
+  cursor get_role_mod_details is
+    select rmd.area_name, rmd.item_name, rmd.enabled_flag, rmd.query_only,
+           rmd.update_flag, rmd.secure_flag
+    from role_module_details rmd
+    where rmd.role = aRolename
+    and   rmd.module_name = aModule_name;
+
+  role_mod_det_row    get_role_mod_details%rowtype;
+  aRMD_area_name      role_mod_det_row.area_name%type;
+  aRMD_item_name      role_mod_det_row.item_name%type;
+  aRMD_enabled_flag   role_mod_det_row.enabled_flag%type;
+  aRMD_q_only_flag     role_mod_det_row.query_only%type;
+  aRMD_update_flag    role_mod_det_row.update_flag%type;
+  aRMD_secure_flag    role_mod_det_row.secure_flag%type;
+    
+  cursor get_um_count is
+    select count(*)
+    from user_modules um
+    where um.username = aUsername
+    and   um.module_name = aModule_name;
+
+  nNum_rows_um        number;
+
+  cursor get_umd_count is
+    select count(*)
+    from user_module_details umd
+    where umd.username = aUsername
+    and   umd.module_name = aModule_name
+    and   umd.area_name = aRMD_area_name
+    and   umd.item_name = aRMD_item_name;
+
+  nNum_rows_umd       number;
+
+begin
+
+  for role_modules_row in get_role_modules loop
+
+    aModule_name := role_modules_row.module_name;
+    aRM_update_flag := role_modules_row.update_allowed_flag;
+    aRM_insert_flag := role_modules_row.insert_allowed_flag;
+    aRM_delete_flag := role_modules_row.delete_allowed_flag;
+    aRM_q_only_flag := role_modules_row.query_only;
+
+    open get_um_count;
+    fetch get_um_count into nNum_rows_um;
+    close get_um_count;
+ 
+    if nNum_rows_um = 0 then
+
+      begin
+
+      /* insert user_modules - MASTER TABLE */
+
+      insert into user_modules (
+        username, module_name, insert_allowed_flag, update_allowed_flag,
+        delete_allowed_flag, query_only_flag, record_by, record_date)
+      values (
+        aUsername, aModule_name, aRM_insert_flag, aRM_update_flag,
+        aRM_delete_flag, aRM_q_only_flag, user, sysdate);
+
+       /*insert user_module_details - DETAIL TABLE */
+
+       insert into user_module_details(
+         username, module_name, area_name, item_name, enabled_flag,
+         query_only_flag, update_flag, secure_flag, record_by, record_date)
+       select aUsername, aModule_name, rmd.area_name,              
+              rmd.item_name, rmd.enabled_flag,
+              rmd.query_only, rmd.update_flag, rmd.secure_flag, user, sysdate
+       from role_module_details rmd
+       where rmd.role = aRolename
+       and   module_name = aModule_name;
+
+       end;
+
+    else
+
+      update user_modules
+      set insert_allowed_flag = decode(insert_allowed_flag, 'Y', insert_allowed_flag,
+                                aRM_insert_flag),
+          update_allowed_flag = decode(update_allowed_flag, 'Y', update_allowed_flag,
+                                aRM_update_flag),
+          delete_allowed_flag = decode(update_allowed_flag, 'Y', update_allowed_flag,
+                                aRM_delete_flag),
+          query_only_flag     = decode(query_only_flag, 'N', query_only_flag, 
+                                aRM_q_only_flag),
+          modified_by         = user,
+          modification_date   = sysdate
+      where username = aUsername
+      and   module_name = aModule_name
+      and   ((insert_allowed_flag = 'N' and aRM_insert_flag = 'Y')
+            or
+            (update_allowed_flag = 'N' and aRM_update_flag = 'Y')
+            or
+            (delete_allowed_flag = 'N' and aRM_delete_flag = 'Y')
+            or
+            (query_only_flag = 'Y' and aRM_q_only_flag = 'N'));
+
+       begin
+
+       for role_mod_det_row in get_role_mod_details loop
+
+         aRMD_area_name := role_mod_det_row.area_name;
+         aRMD_item_name := role_mod_det_row.item_name;
+         aRMD_enabled_flag := role_mod_det_row.enabled_flag;
+         aRMD_q_only_flag := role_mod_det_row.query_only;
+         aRMD_update_flag := role_mod_det_row.update_flag;
+         aRMD_secure_flag := role_mod_det_row.secure_flag;
+
+         open get_umd_count;
+         fetch get_umd_count into nNum_rows_umd;
+         close get_umd_count;
+
+         if nNum_rows_umd = 0 then
+
+           insert into user_module_details (
+             username, module_name, area_name, item_name,
+             enabled_flag, query_only_flag, update_flag, secure_flag,
+             record_by, record_date)
+           values (
+             aUsername, aModule_name, aRMD_area_name, aRMD_item_name,
+             aRMD_enabled_flag, aRMD_q_only_flag, aRMD_update_flag, aRMD_secure_flag,
+             user, sysdate);
+
+          else
+
+            update user_module_details
+            set enabled_flag      = decode(enabled_flag, 'Y', enabled_flag,
+                                    aRMD_enabled_flag),
+                query_only_flag   = decode(query_only_flag, 'N', query_only_flag,
+                                    aRMD_q_only_flag),
+                update_flag       = decode(update_flag, 'Y', update_flag,
+                                    aRMD_update_flag),
+                secure_flag       = decode(secure_flag, 'N', secure_flag,
+                                    aRMD_secure_flag),
+                modified_by       = user,
+                modification_date = sysdate
+            where username = aUsername
+            and   module_name = aModule_name
+            and   area_name = aRMD_area_name
+            and   item_name = aRMD_item_name
+            and   ((enabled_flag = 'N' and aRMD_enabled_flag = 'Y')
+                  or
+                  (query_only_flag = 'Y' and aRMD_q_only_flag = 'N')
+                  or
+                  (update_flag = 'N' and aRMD_update_flag = 'Y')
+                  or
+                  (secure_flag = 'Y' and aRMD_secure_flag = 'N'));
+
+          end if;
+
+       end loop;
+       end;
+    end if;
+
+  end loop;
+
+  exception 
+    when no_data_found then
+      message('NO_DATA_FOUND');
+      null;
+end;
+end;
+
+procedure upd_user_options (aUsername in char) is
+
+begin
+
+  update user_config_options
+  set last_access_mod_by = user,
+      last_access_mod_date = sysdate
+  where username = aUsername;
+
+end;

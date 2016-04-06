@@ -1,0 +1,1208 @@
+
+
+PROCEDURE check_attendance_out(param        in varchar2,
+                               pname        in varchar2,
+                               ploadseq     in number,
+                               pdistrict_id in varchar2,
+                               precord_count in number,
+                               perror_count  in out number,
+                               pcollection   in varchar2,
+                               pmandatory    in boolean)
+IS
+BEGIN
+/* Verified and tested - tmg */
+/* Note, pmandatory must be set upon calling the procedure.  This
+   means that if Public School Residence Status is null, pmandatory
+   must be TRUE, otherwise it may be FALSE                          */
+
+DECLARE
+
+  bsuccess            boolean := TRUE;
+
+BEGIN
+
+  general_pkg.check_null(param, pname, ploadseq,
+                         pdistrict_id, precord_count, perror_count,
+                         pcollection, pmandatory, bsuccess);
+
+  if bsuccess = TRUE then
+    general_pkg.valid_code_check(param, pname, ploadseq, pdistrict_id,
+                                 precord_count, perror_count, pcollection);
+  end if;
+
+END;
+END;
+
+PROCEDURE check_birth_date(param         in varchar2,
+                           pname         in varchar2,
+                           ploadseq      in number,
+                           pdistrict_id  in varchar2,
+                           precord_count in number,
+                           perror_count  in out number,
+                           pcollection   in varchar2,
+                           pinst_type    in varchar2,
+                           pmandatory    in boolean)
+IS
+BEGIN
+/* Modified for new format...installed 16-MAY-1996 - tmg */
+/* Verified and tested - tmg */
+DECLARE
+
+  bsuccess          boolean := TRUE;
+  vbirth_date       date;
+  vone_year         date := add_months(sysdate, -12);
+  v22_year          date := add_months(sysdate, -264);
+  xbad_date         exception;
+  pragma exception_init(xbad_date, -1840);
+
+BEGIN
+
+  general_pkg.check_null(param, pname, ploadseq,
+                         pdistrict_id, precord_count, perror_count,
+                         pcollection, pmandatory, bsuccess);
+
+  begin
+
+    vbirth_date := to_date(param, 'MMDDYYYY');
+
+  exception
+    when xbad_date then
+      general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, 'BIRTH_DATE', 'CHKFORM');
+  end;
+
+  if vbirth_date > vone_year or vbirth_date < v22_year then
+      general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, 'BIRTH_DATE', 'CHKRANGE');
+  else
+
+  if pinst_type  = '91' then
+     if vbirth_date < (add_months(sysdate, -48)) or vbirth_date > (add_months(sysdate, -36)) then
+       general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, 'BIRTH_DATE', 'CHK34PGM');
+     end if;
+  elsif pinst_type  = '90' then
+     if vbirth_date < (add_months(sysdate, -60)) or vbirth_date > (add_months(sysdate, -48)) then
+       general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, 'BIRTH_DATE', 'CHK45PGM');
+     end if;
+  end if;
+  end if;
+end;       
+
+END;
+
+PROCEDURE check_birth_date_org(param         in varchar2,
+                           pname         in varchar2,
+                           ploadseq      in number,
+                           pdistrict_id  in varchar2,
+                           precord_count in number,
+                           perror_count  in out number,
+                           pcollection   in varchar2,
+                           pinst_type1   in varchar2,
+                           pinst_type2   in varchar2,
+                           pinst_type3   in varchar2,
+                           pinst_type4   in varchar2,
+                           pinst_type5   in varchar2,
+                           pinst_type6   in varchar2,
+                           pmandatory    in boolean)
+IS
+BEGIN
+/* Verified and tested - tmg */
+DECLARE
+
+  bsuccess          boolean := TRUE;
+  vbirth_date       date;
+  vone_year         date := add_months(sysdate, -12);
+  v22_year          date := add_months(sysdate, -264);
+  xbad_date         exception;
+  pragma exception_init(xbad_date, -1840);
+
+BEGIN
+
+  general_pkg.check_null(param, pname, ploadseq,
+                         pdistrict_id, precord_count, perror_count,
+                         pcollection, pmandatory, bsuccess);
+
+  begin
+
+    vbirth_date := to_date(param, 'MMDDYYYY');
+
+  exception
+    when xbad_date then
+      general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, 'BIRTH_DATE', 'CHKFORM');
+  end;
+
+  if vbirth_date > vone_year or vbirth_date < v22_year then
+      general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, 'BIRTH_DATE', 'CHKRANGE');
+  else
+
+  if pinst_type1 = '91' or
+     pinst_type2 = '91' or
+     pinst_type3 = '91' or
+     pinst_type4 = '91' or
+     pinst_type5 = '91' or
+     pinst_type6 = '91' then
+     if vbirth_date < (add_months(sysdate, -48)) or vbirth_date > (add_months(sysdate, -36)) then
+       general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, 'BIRTH_DATE', 'CHK34PGM');
+     end if;
+  elsif pinst_type1 = '90' or
+     pinst_type2 = '90' or
+     pinst_type3 = '90' or
+     pinst_type4 = '90' or
+     pinst_type5 = '90' or
+     pinst_type6 = '90' then
+     if vbirth_date < (add_months(sysdate, -60)) or vbirth_date > (add_months(sysdate, -48)) then
+       general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, 'BIRTH_DATE', 'CHK45PGM');
+     end if;
+  end if;
+  end if;
+end;       
+
+END;
+
+PROCEDURE check_county(param IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- LoadINg sequence
+                    pdistrict_id  in VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The NUMBER of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+
+       general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+   
+      IF bsuccess then
+         general_pkg.valid_code_check(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+
+        
+      END IF; 
+  
+END;
+END;  
+
+
+
+PROCEDURE check_instruct_program(pinst_type1  in varchar2,
+                                 pinst_type2  in varchar2,
+                                 pinst_type3  in varchar2,
+                                 pinst_type4  in varchar2,
+                                 pinst_type5  in varchar2,
+                                 pinst_type6  in varchar2,
+                                 pdistrict_id in number,
+                                 precord_count in number,
+                                 perror_count  in out number)
+IS
+BEGIN
+DECLARE
+
+  type instabtyp is table of char(2)index by binary integer;
+
+  prg_tab    instabtyp;
+
+  recno      binary_integer := 0;
+  recno2     binary_integer := 0;
+
+  cursor validate_type(inputcode in varchar2) is
+    select count(*)
+    from general_codes
+    where source = 'INSTRUCT_PRG_TYPE'
+    and   code   = inputcode;
+
+  nNum_rows number := 0;
+
+begin
+
+  if pinst_type1 is not null then
+    prg_tab(recno) := pinst_type1;
+    recno := recno + 1;
+  end if;
+  if pinst_type2 is not null then
+    prg_tab(recno) := pinst_type2;
+    recno := recno + 1;
+  end if;
+  if pinst_type3 is not null then
+    prg_tab(recno) := pinst_type3;
+    recno := recno + 1;
+  end if;
+  if pinst_type4 is not null then
+    prg_tab(recno) := pinst_type4;
+    recno := recno + 1;
+  end if;
+  if pinst_type5 is not null then
+    prg_tab(recno) := pinst_type5;
+    recno := recno + 1;
+  end if;
+  if pinst_type6 is not null then
+    prg_tab(recno) := pinst_type6;
+  end if;
+
+  if recno > 0 then
+    for recno2 in 0 .. recno loop  
+      open validate_type(prg_tab(recno2));
+      fetch validate_type into nNum_rows;
+      close validate_type;
+
+      if nNum_rows = 0 then
+        write_error_table(prg_tab(recno2), ploadseq, pdistrict_id, precord_count,
+                          perror_count, pcollection, 'INSTRUCT_PRG_TYPE', 'CHKCODE');
+      end if;
+    end loop;
+  end if;
+end;  
+END;
+
+PROCEDURE check_non_residence(param          in varchar2,
+                              pname          in varchar2,
+                              pstate_code    in varchar2,  -- The state code for parent residence
+                              ploadseq       in number,
+                              pdistrict_id   in varchar2,
+                              precord_count  in number,
+                              perror_count   in out number,
+                              pcollection    in varchar2,
+                              pmandatory     in boolean)
+IS
+BEGIN
+/* NOTE:  The check against PUBLIC SCHOOL RESIDENCE STATUS in '03','04 must be completed
+          in the outer control structure and PMANDATORY set to TRUE, otherwise FALSE     */
+DECLARE
+  
+  bsuccess          boolean := TRUE;
+
+BEGIN
+
+  general_pkg.check_null(param, pname, ploadseq,
+                         pdistrict_id, precord_count, perror_count,
+                         pcollection, pmandatory, bsuccess);
+
+  if bsuccess = TRUE then
+    if upper(pstate_code) = 'CO' then
+      general_pkg.valid_code_check(param, 'DISTRICT', ploadseq, pdistrict_id,
+                                   precord_count, perror_count, pcollection);
+     else
+       general_pkg.valid_code_check(param, 'PARENT_STATE_OR_COUNTRY', ploadseq, pdistrict_id,
+                                    precord_count, perror_count, pcollection);
+     end if;
+   end if;
+
+
+END;
+END;
+
+
+PROCEDURE CHECK_PARENT_ZIP(param  IN VARCHAR2,   -- Parameter to be checked
+                    plength_in    IN NUMBER,     -- Length of the paramenter
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- LoadINg sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The NUMBER of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection   IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+       general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+   
+      IF bsuccess then
+         valid_numeric(param,plength_in, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+        
+      END IF; 
+END;
+END;  
+
+
+
+PROCEDURE check_school_finance(param         in varchar2,
+                               pname         in varchar2,
+                               ploadseq      in number,
+                               pdistrict_id  in varchar2,
+                               precord_count in number,
+                               perror_count  in out number,
+                               pcollection   in varchar2,
+                               pmandatory    in boolean,
+                               pbirth_date   in varchar2,
+                               pschl_bld_cd  in varchar2,
+                               prationale    in varchar2,
+                               pres_stat     in varchar2,
+                               pfac_code     in varchar2)
+IS
+BEGIN
+/* Verified and tested - tmg */
+ DECLARE
+
+  vbirth_date             date;  -- To contain date value for pbirth_date.
+  vlower_limit_date       date := add_months(sysdate, -252); --Calculated lower bound for birthdate
+  xbad_date               exception;
+  pragma exception_init(xbad_date, -1840);
+  bsuccess                boolean := TRUE;
+
+ BEGIN
+
+  BEGIN
+
+   vbirth_date := to_date(pbirth_date, 'MMDDYYYY');
+
+  EXCEPTION
+
+    when xbad_date then
+      null;
+
+  END;
+
+  
+  general_pkg.check_null(param, pname, ploadseq,
+                         pdistrict_id, precord_count, perror_count,
+                         pcollection, pmandatory, bsuccess);
+  
+  if bsuccess = TRUE then
+    general_pkg.valid_code_check(param, pname, ploadseq, pdistrict_id,
+                                 precord_count, perror_count, pcollection);
+
+    if vbirth_date <= vlower_limit_date then
+      if param <> '94' then
+        general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                          perror_count, pcollection, 'FND_STAT', '21ERR');
+      end if;
+    end if;
+
+    if pschl_bld_cd is not null and pres_stat = '04' then
+      if param <> '94' then
+        general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                          perror_count, pcollection, 'FND_STAT', 'SCHLST');
+      end if;
+    end if;
+
+    if prationale is not null and prationale <> '90' then
+      if param not in ('91','92') then
+        general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                          perror_count, pcollection, 'FND_STAT', 'RAT_ERR'); 
+      end if;
+    end if;
+
+    if prationale is not null and prationale = '90' and pfac_code is not null then
+      if param <> '91' then
+        general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                          perror_count, pcollection, 'FND_STAT', 'FACD_ERR'); 
+      end if;
+    end if;
+
+  end if;
+
+end;
+end;
+  
+
+PACKAGE GENERAL_PKG IS
+
+PROCEDURE write_error_table(param       IN VARCHAR2,
+                          ploadseq      IN number,     
+                          pdistrict_id  IN varchar2,   
+                          precord_count IN number,     
+                          perror_count  IN OUT number, 
+                          pcollection   IN varchar2,    
+                          pname         IN varchar2,    
+                          ptype         IN varchar2);
+
+PROCEDURE check_null(param              in varchar2,   
+                          pname         in varchar2,   
+                          ploadseq      in number,     
+                          pdistrict_id  in varchar2,   
+                          precord_count in number,     
+                          perror_count  in out number, 
+                          pcollection       in varchar2,   
+                          pmandatory    in boolean,       
+                          psuccess      out boolean);  
+
+PROCEDURE valid_name_chars(param        in varchar2,   
+                          pname         in varchar2,   
+                          ploadseq      in number, 
+                          pdistrict_id  in varchar2,   
+                          precord_count in number,     
+                          perror_count  in out number, 
+                          pcollection       in varchar2);  
+
+PROCEDURE valid_text_spacing(param         in varchar2,   
+                          pname         in varchar2,   
+                          ploadseq      in number,     
+                          pdistrict_id  in varchar2,    
+                          precord_count in number,     
+                          perror_count  in out number, 
+                          pcollection       in varchar2);   
+          
+
+PROCEDURE dupe_on_ssn    (param         in varchar2,   
+                          pname         in varchar2,   
+                          ploadseq      in number,     
+                          pdistrict_id  in varchar2,   
+                          precord_count in number,     
+                          perror_count  in out number, 
+                          pcollection       in varchar2);   
+
+PROCEDURE valid_code_check(param  IN VARCHAR2,   
+                    pname         IN VARCHAR2,   
+                    ploadseq      IN NUMBER,     
+                    pdistrict_id  IN VARCHAR2,    
+                    precord_count IN NUMBER,     
+                    perror_count  IN OUT NUMBER, 
+                    pcollection       IN VARCHAR2);    
+
+
+PROCEDURE check_ethnic(param      IN VARCHAR2,   
+                    pname         IN VARCHAR2,   
+                    ploadseq      IN NUMBER,     
+                    pdistrict_id  IN VARCHAR2,    
+                    precord_count IN NUMBER,     
+                    perror_count  IN OUT NUMBER, 
+                    pcollection       IN VARCHAR2,   
+                    pmandatory    IN BOOLEAN); 
+
+PROCEDURE check_gender(param      IN VARCHAR2,   
+                    pname         IN VARCHAR2,   
+                    ploadseq      IN NUMBER,     
+                    pdistrict_id  IN VARCHAR2,    
+                    precord_count IN NUMBER,     
+                    perror_count  IN OUT NUMBER, 
+                    pcollection       IN VARCHAR2,   
+                    pmandatory    IN BOOLEAN);    
+               
+           
+PROCEDURE get_message_text(param_name IN VARCHAR2,
+                           param_type IN VARCHAR2,
+                           pmessage   IN OUT VARCHAR2);
+
+
+PROCEDURE check_ssn(param in varchar2, pname in varchar2, ploadseq in number, 
+                      pdistrict_id  in varchar2, precord_count in number,
+                      perror_count  in out number, pcollection in varchar2,
+                      pmandatory    in boolean);
+
+PROCEDURE check_first_name(param in varchar2, pname in varchar2, ploadseq in number, 
+                      pdistrict_id  in varchar2, precord_count in number,
+                      perror_count  in out number, pcollection in varchar2,
+                      pmandatory    in boolean);
+
+PROCEDURE check_middle_name(param in varchar2, pname in varchar2, ploadseq in number, 
+                      pdistrict_id  in varchar2, precord_count in number,
+                      perror_count  in out number, pcollection in varchar2,
+                      pmandatory    in boolean);
+  
+  PROCEDURE check_last_name(param in varchar2, pname in varchar2, ploadseq in number, 
+                      pdistrict_id  in varchar2, precord_count in number,
+                      perror_count  in out number, pcollection in varchar2,
+                      pmandatory    in boolean);
+ 
+  FUNCTION valid_date_format(param in varchar2) return boolean;
+
+  FUNCTION numeric_string(param in varchar2, req_length in number) return boolean;
+ 
+END;
+
+PACKAGE BODY GENERAL_PKG IS
+
+
+/********************************************************************************************/
+/*Get_message_text
+/********************************************************************************************/
+PROCEDURE get_message_text(param_name IN VARCHAR2,
+                           param_type IN VARCHAR2,
+                           pmessage   IN OUT VARCHAR2) 
+IS
+BEGIN
+DECLARE 
+   CURSOR retrieve_message IS 
+      SELECT message_text 
+      FROM message_master
+      WHERE message_source = param_name 
+      AND   message_check_type_code = param_type;
+BEGIN
+   OPEN retrieve_message;
+   FETCH retrieve_message INTO pmessage;
+   CLOSE retrieve_message;
+EXCEPTION
+   WHEN NO_DATA_FOUND THEN
+      pmessage := '1 - No message found for '||param_name||' '||param_type;
+END; 
+
+END;
+
+
+/********************************************************************************************/
+/*Write_error_table 
+/********************************************************************************************/
+PROCEDURE write_error_table(param       IN VARCHAR2,   -- Parameter to be checked
+                          ploadseq      IN number,     -- Loading sequence
+                          pdistrict_id  IN varchar2,   -- The district id for message 
+                          precord_count IN number,     -- The number of records processed for message
+                          perror_count  IN OUT number, -- The number of records in error
+                          pcollection   IN varchar2,    -- The collection period ('STUOCT', 'FINDEC')
+                          pname         IN varchar2,    -- The name of the field in error
+                          ptype         IN varchar2)    -- The error_type in message_master table
+                          
+IS
+BEGIN
+DECLARE
+   perror_text message_master.message_text%type;
+BEGIN
+   general_pkg.get_message_text (pname, ptype, perror_text);
+   perror_count := perror_count + 1; 
+   INSERT INTO error_table (loadseq, district, record_count, error_text, error_count, collection, source, failed_value)
+   VALUES (ploadseq, pdistrict_id, precord_count, perror_text, perror_count, pcollection, pname, param);  
+end;
+END write_error_table;
+
+
+
+/********************************************************************************************/
+/*Check_Null check
+/********************************************************************************************/
+PROCEDURE check_null(param              in varchar2,   -- Parameter to be checked
+                          pname         in varchar2,   -- Parameter name - used for message
+                          ploadseq      in number,     -- Loading sequence
+                          pdistrict_id  in varchar2,   -- The district id for message 
+                          precord_count in number,     -- The number of records processed for message
+                          perror_count  in out number, -- The number of errors for this run
+                          pcollection       in varchar2,   -- The collection period ('STUOCT', 'FINDEC'))
+                          pmandatory    in boolean,    -- Indicates whether the field is mandatory   
+                          psuccess      out boolean)   -- Show success or failure
+IS
+BEGIN
+
+  IF param is null THEN
+    psuccess := FALSE;
+
+    IF pmandatory = TRUE THEN
+       general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                         perror_count, pcollection, pname, 'CHKNULL');
+    END IF;
+  ELSE
+    psuccess := TRUE;
+  END IF;
+END;
+
+/********************************************************************************************/
+/*Valid_text_spacing checks 
+/********************************************************************************************/
+PROCEDURE valid_text_spacing(param         in varchar2,   -- Parameter to be checked
+                          pname         in varchar2,   -- Parameter name - used for message
+                          ploadseq      in number,     -- Loading sequence
+                          pdistrict_id  in varchar2,   -- The district id for message 
+                          precord_count in number,     -- The number of records processed for message
+                          perror_count  in out number, -- The number of errors for this run
+                          pcollection       in varchar2)   -- The collection period ('STUOCT', 'FINDEC'))
+                          
+IS
+BEGIN
+DECLARE
+   vcheck_text    VARCHAR2(40);
+   
+   BEGIN
+      vcheck_text  := REPLACE(param,'  ','~%');
+      IF INSTR(vcheck_text,'~%') > 0 THEN
+         general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                      perror_count, pcollection, pname, 'CHKSPACE');
+         
+       END IF;
+   END;
+END;
+
+/********************************************************************************************/
+/*Dupe_on_ssn check 
+/********************************************************************************************/
+
+PROCEDURE DUPE_ON_SSN    (param         in varchar2,   -- Parameter to be checked
+                          pname         in varchar2,   -- Parameter name - used for message lookup - SSN, ETHNIC...
+                          ploadseq      in number,     -- Loading sequence
+                          pdistrict_id  in varchar2,   -- The district id for message 
+                          precord_count in number,     -- The number of records processed for message
+                          perror_count  in out number, -- The number of errors for this run
+                          pcollection       in varchar2)   -- The collection period ('STUOCT', 'FINDEC'))
+                          
+IS
+BEGIN
+DECLARE
+   nNum_rows      NUMBER;
+   CURSOR get_valid  IS
+      SELECT count(*)
+      FROM stu_oct_master
+      WHERE soc_sec_nbr = param; 
+BEGIN
+   OPEN get_valid;
+   FETCH get_valid INTO nNum_rows; 
+   CLOSE get_valid;
+
+   IF nNum_rows > 1 THEN
+    general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                      perror_count, pcollection, pname, 'CHKDUPE');
+   END IF;  
+END;
+END;
+
+/********************************************************************************************/
+/*Valid_code_check checks 
+/********************************************************************************************/
+PROCEDURE valid_code_check(param  IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message AND to lookup INthe general_codes table
+                    ploadseq      IN NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2)   -- The collection period ('STUOCT', 'FINDEC'))
+                    
+IS
+BEGIN
+DECLARE
+   nNum_rows      NUMBER;
+   CURSOR get_valid IS
+      SELECT count(*)
+      FROM general_codes
+      WHERE code = param
+      AND   source = pname; 
+BEGIN
+   OPEN get_valid;
+   FETCH get_valid INTO nNum_rows; 
+   CLOSE get_valid;
+
+   IF nNum_rows = 0 THEN
+      general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                        perror_count, pcollection, pname, 'CHKCODE');
+   END IF;  
+END;
+END;
+
+/********************************************************************************************/
+/*Check_first_name checks 
+/********************************************************************************************/
+
+PROCEDURE CHECK_FIRST_NAME(param  IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- LoadINg sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess then
+         general_pkg.valid_name_chars(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+
+         general_pkg.valid_text_spacing(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;  
+/********************************************************************************************/
+/*Check_middle_name checks 
+/********************************************************************************************/
+PROCEDURE check_middle_name(param IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- LoadINg sequence
+                    pdistrict_id  in VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The NUMBER of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+
+       general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+   
+      IF bsuccess then
+         general_pkg.valid_name_chars(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+
+         general_pkg.valid_text_spacing(param, pname, ploadseq, pdistrict_id,
+                   precord_count, perror_count, pcollection);
+      END IF; 
+  
+END;
+END;  
+
+/********************************************************************************************/
+/*Check_last_name checks 
+/********************************************************************************************/
+PROCEDURE check_last_name(param         IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      in NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+ IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess THEN
+         general_pkg.valid_name_chars(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+
+         general_pkg.valid_text_spacing(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;  
+
+
+/********************************************************************************************/
+/*Check_ssn checks
+/********************************************************************************************/
+PROCEDURE CHECK_SSN(param         IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess = TRUE THEN
+          general_pkg.dupe_on_ssn(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;
+
+/********************************************************************************************/
+/*Check_ethnic checks 
+/********************************************************************************************/
+PROCEDURE check_ethnic(param      IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+   
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess THEN
+         
+         general_pkg.valid_code_check(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;
+
+
+/********************************************************************************************/
+/*Check_gender checks 
+/********************************************************************************************/
+PROCEDURE check_gender(param      IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+   
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess THEN
+         general_pkg.valid_code_check(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;
+
+/********************************************************************************************/
+/*Valid_Name_Chars 
+/********************************************************************************************/
+PROCEDURE valid_name_chars(param        in varchar2,   -- Parameter to be checked
+                          pname         in varchar2,   -- Parameter name - used for message
+                          ploadseq      in number,     -- Loading sequence
+                          pdistrict_id  in varchar2,   -- The district id for message 
+                          precord_count in number,     -- The number of records processed for message
+                          perror_count  in out number, -- The number of errors for this run
+                          pcollection       in varchar2)   -- The collection period ('STUOCT', 'FINDEC'))
+                          
+IS
+BEGIN
+DECLARE
+   valid_string   BOOLEAN;
+   vchar          CHAR(1);
+   vlength        NUMBER;
+   vindex         NUMBER;
+
+   BEGIN
+   vlength        := LENGTH(param);
+   valid_string   := TRUE;
+   vindex         := 1;
+ 
+   WHILE valid_string AND vindex <= vlength
+   LOOP
+      vchar := UPPER(SUBSTR(param, vindex, 1));
+      IF vchar NOT BETWEEN 'A' and 'Z' AND
+         vchar NOT IN ('''', '-', '/', ' ') THEN
+         write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                      perror_count, pcollection, pname, 'CHKFORM');
+         valid_string := FALSE;
+      END IF;
+      vindex := vindex + 1;
+    END LOOP;
+
+  END;
+END;
+
+FUNCTION valid_date_format(param in varchar2)
+         return boolean 
+is
+begin
+declare
+
+  valid_string     boolean;
+  vyyyy            varchar2(4);
+  vmm              varchar2(2);
+  vdd              varchar2(2);
+  vlast_dd         varchar2(2);
+
+  vfirst_day       date;
+  vlast_day        date;
+
+begin
+
+  valid_string := TRUE;
+
+  vyyyy := substr(param, 1, 4);
+  vmm  := substr(param, 5, 2);
+  vdd  := substr(param, 7, 2);
+
+  if not numeric_string(param, 8) or
+    vyyyy not between '1900' and '2999' or
+    vmm  not between '01'   and '12'  then
+      valid_string := FALSE;
+  else
+    vfirst_day := to_date(vmm || '01' || vyyyy, 'MMDDYYYY');
+    vlast_day  := last_day(vfirst_day);
+    vlast_dd   := substr(to_char(vlast_day, 'MMDDYYYY'), 3, 2);
+
+    if vdd not between '01' and vlast_dd then
+      valid_string := FALSE;
+    end if;
+  end if;
+
+  return valid_string;
+
+end;
+end;
+
+FUNCTION numeric_string(param in varchar2, req_length in number) return boolean
+is
+begin 
+
+  null;
+
+end;
+
+
+END;
+
+
+PACKAGE STUDENT_OCT_PKG IS
+  
+PROCEDURE check_migrant(param     IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message AND to check the source INthe general_codes table
+                    ploadseq      IN NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection   IN VARCHAR2,   -- The source of the request
+                    pmandatory    IN BOOLEAN);   -- Indicates whether the field is mandatory
+
+
+PROCEDURE check_county (param     IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message AND to check the source INthe general_codes table
+                    ploadseq      IN NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection   IN VARCHAR2,   -- The source of the request
+                    pmandatory    IN BOOLEAN);   -- Indicates whether the field is mandatory
+
+PROCEDURE check_parent_first_name(param  IN VARCHAR2,   
+                    pname         IN VARCHAR2,   
+                    ploadseq      IN NUMBER,     
+                    pdistrict_id  IN VARCHAR2,   
+                    precord_count IN NUMBER,     
+                    perror_count  IN OUT NUMBER, 
+                    pcollection   IN VARCHAR2,  
+                    pmandatory    IN BOOLEAN);  
+ 
+PROCEDURE check_parent_middle_name(param  IN VARCHAR2,   
+                    pname         IN VARCHAR2,   
+                    ploadseq      IN NUMBER,     
+                    pdistrict_id  IN VARCHAR2,   
+                    precord_count IN NUMBER,     
+                    perror_count  IN OUT NUMBER, 
+                    pcollection       IN VARCHAR2,  
+                    pmandatory    IN BOOLEAN);  
+
+ PROCEDURE check_parent_last_name(param  IN VARCHAR2,   
+                    pname         IN VARCHAR2,   
+                    ploadseq      IN NUMBER,     
+                    pdistrict_id  IN VARCHAR2,   
+                    precord_count IN NUMBER,     
+                    perror_count  IN OUT NUMBER, 
+                    pcollection       IN VARCHAR2,  
+                    pmandatory    IN BOOLEAN);  
+ 
+
+  
+END;
+
+PACKAGE BODY student_oct_pkg IS
+
+
+/********************************************************************************************/
+/*Check_migrant checks 
+/********************************************************************************************/
+PROCEDURE CHECK_MIGRANT(param     IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message AND to check the source INthe general_codes table
+                    ploadseq      IN NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection   IN VARCHAR2,   -- The source of the request
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+   
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess THEN
+         general_pkg.valid_code_check(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;
+/********************************************************************************************/
+/*Check_COUNTY checks 
+/********************************************************************************************/
+PROCEDURE CHECK_COUNTY(param     IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message AND to check the source INthe general_codes table
+                    ploadseq      IN NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection   IN VARCHAR2,   -- The source of the request
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+   
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess THEN
+         general_pkg.valid_code_check(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;
+
+/********************************************************************************************/
+/*Check_parent_first_name checks 
+/********************************************************************************************/
+
+PROCEDURE check_parent_first_name(param  IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- LoadINg sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection   IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess then
+         general_pkg.valid_name_chars(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+
+         general_pkg.valid_text_spacing(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;  
+
+/********************************************************************************************/
+/*Check_PARENT_middle_name checks 
+/********************************************************************************************/
+
+PROCEDURE check_parent_middle_name(param IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      IN NUMBER,     -- LoadINg sequence
+                    pdistrict_id  in VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The NUMBER of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection   IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+
+       general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+   
+      IF bsuccess then
+         general_pkg.valid_name_chars(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+
+         general_pkg.valid_text_spacing(param, pname, ploadseq, pdistrict_id,
+                   precord_count, perror_count, pcollection);
+      END IF; 
+  
+END;
+END;  
+
+/********************************************************************************************/
+/*Check_parent_last_name checks 
+/********************************************************************************************/
+
+PROCEDURE check_parent_last_name(param         IN VARCHAR2,   -- Parameter to be checked
+                    pname         IN VARCHAR2,   -- Parameter name - used for message
+                    ploadseq      in NUMBER,     -- Loading sequence
+                    pdistrict_id  IN VARCHAR2,   -- The district id for message 
+                    precord_count IN NUMBER,     -- The number of records processed for message
+                    perror_count  IN OUT NUMBER, -- The number of errors for this run
+                    pcollection       IN VARCHAR2,   -- The collection period ('STUOCT', 'FINDEC'))
+                    pmandatory    IN BOOLEAN)    -- Indicates whether the field is mandatory
+ IS
+BEGIN
+DECLARE
+   bsuccess         BOOLEAN := TRUE;
+BEGIN
+
+      general_pkg.check_null(param, pname, ploadseq,
+                      pdistrict_id, precord_count, perror_count,
+                      pcollection, pmandatory, bsuccess);
+      IF bsuccess THEN
+         general_pkg.valid_name_chars(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+
+         general_pkg.valid_text_spacing(param, pname, ploadseq, pdistrict_id,
+                     precord_count, perror_count, pcollection);
+      END IF;
+
+END;
+END;
+
+END;
+
+PROCEDURE valid_numeric(param           in varchar2,   -- Parameter to be checked
+                          plength_in    in NUMBER,     -- Lenght of the parameter being passed in                          
+                          pname         in varchar2,   -- Parameter name - used for message
+                          ploadseq      in number,     -- Loading sequence
+                          pdistrict_id  in varchar2,   -- The district id for message 
+                          precord_count in number,     -- The number of records processed for message
+                          perror_count  in out number, -- The number of errors for this run
+                          pcollection   in varchar2)   -- The collection period ('STUOCT', 'FINDEC'))
+                         
+IS
+BEGIN
+DECLARE
+   vcheck_string    VARCHAR2(20);
+  
+   BEGIN
+      vcheck_string  := SUBSTR('NNNNNNNNNNNNNNNN',1,plength_in);
+
+      IF TRANSLATE(param,'1234567890','NNNNNNNNNN') <> vcheck_string THEN
+         general_pkg.write_error_table(param, ploadseq, pdistrict_id, precord_count,
+                      perror_count, pcollection, pname, 'CHKFORM');
+         
+       END IF;
+   END;
+END;

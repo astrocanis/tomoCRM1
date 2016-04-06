@@ -1,0 +1,92 @@
+
+
+procedure b$check_access is
+      /* This procedure retrieves accesss and security information regarding
+         a user and restrictions placed on the user for the screen.
+         This procedure may be referenced.                                   */
+begin
+declare
+  form_name    char(8) := name_in('system.current_form');
+  field_name   char(61);
+  cursor access_detail is
+    select umd.enabled_flag, umd.query_only_flag, umd.update_flag,
+           umd.area_name, umd.item_name
+    from   user_module_details umd
+    where  umd.username = user
+    and    umd.module_name = form_name;
+
+  access_det access_detail%rowtype;
+
+  cursor access_header is
+    select umod.insert_allowed_flag, umod.update_allowed_flag, 
+           umod.delete_allowed_flag, umod.query_only_flag
+    from user_modules umod
+    where umod.username = user
+    and   umod.module_name = form_name;
+
+  umod_Insert user_modules.insert_allowed_flag%type;
+  umod_Update user_modules.update_allowed_flag%type;
+  umod_Delete user_modules.delete_allowed_flag%type;
+  umod_Query  user_modules.query_only_flag%type;
+
+  ins_flag char(1);
+  upd_flag char(1);
+  del_flag char(1);
+  q_only_flag char(1);
+
+
+begin
+
+  open access_header;
+  fetch access_header into umod_Insert, umod_Update, umod_Delete, umod_Query;
+  close access_header;
+
+  copy(umod_Insert,'sys$ctrl.insert_flag');
+  copy(umod_Update,'sys$ctrl.update_flag');
+  copy(umod_Delete,'sys$ctrl.delete_flag');
+  copy(umod_Query,'sys$ctrl.query_only_flag');
+
+  open access_detail;
+
+  loop
+
+    fetch access_detail into access_det;
+    exit when access_detail%notfound;
+    field_name := access_det.area_name||'.'||access_det.item_name;
+
+    if access_det.enabled_flag = 'N' then
+      set_item_property(field_name,enabled,property_off);
+    else
+    if access_det.query_only_flag = 'Y' then
+      set_item_property(field_name,query_only,PROPERTY_ON);
+    else
+      set_item_property(field_name,query_only,PROPERTY_OFF);
+      if access_det.update_flag = 'N' and access_det.query_only_flag = 'N' and umod_Update = 'N' then
+        set_item_property(field_name,updateable,PROPERTY_OFF);
+      elsif access_det.update_flag = 'Y' and access_det.query_only_flag = 'N' and umod_Update = 'Y' then
+        set_item_property(field_name,updateable,PROPERTY_ON);
+      end if;
+    end if;
+  end if;
+  end loop;
+  close access_detail;
+  exception
+    when no_data_found then
+      copy('Y','sys$ctrl.insert_flag');
+      copy('Y','sys$ctrl.update_flag');
+      copy('Y','sys$ctrl.delete_flag');
+      copy('N','sys$ctrl.query_only_flag');
+end;
+end;
+
+
+procedure b$show_field(infield in char,
+                       show_type in char) is
+
+begin
+
+  if get_item_property(infield,DISPLAYED) = 'True' then
+    display_item(infield,show_type);
+  end if;
+
+end;

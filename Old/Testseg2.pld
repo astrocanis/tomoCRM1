@@ -1,0 +1,34 @@
+
+
+PROCEDURE create_segment_views IS
+BEGIN
+DECLARE
+  cursor get_org is
+    select organization_id, segment_type_code, number_of_segments, segment_separator
+    from organization_segments;
+
+  r_org              get_org%rowtype;
+  vorg_id            organization_segments.organization_id%type;
+  vsegment_type      organization_segments.segment_type_code%type;
+  vnum_segments      organization_segments.number_of_segments%type;
+  vseg_sep           organization_segments.segment_separator%type;
+
+  view_prefix        varchar2(60);
+  view_select        varchar2(2000);
+
+BEGIN
+
+  for r_org in get_org loop
+    vorg_id       := r_org.organization_id;
+    vsegment_type := r_org.segment_type_code;
+    vnum_segments := r_org.number_of_segments;
+    vseg_sep      := r_org.segment_separator;
+
+    view_prefix   := 'create or replace view '||lower(vsegment_type)||'_'||to_char(vorg_id)||'_v as ';
+
+    if vnum_segments = 1 then
+      view_select := 'select organization_id, segment_value segment1, '''||vseg_sep||''' segment_separator from organization_segment_details where organization_id = '||to_char(vorg_id)||';';
+    end if;
+  end loop;
+end;
+END;

@@ -1,0 +1,240 @@
+
+
+procedure call_help(help_module in char,    /* the name of the help form */
+                    help_item in char,      /* the context field for help */ 
+                    help_block in char,     /* the context block for help */
+                    help_form in char,      /* the context form for help */ 
+                    help_table in char,     /* the context block base table */
+                    help_application in char) /* the context application */
+is
+
+begin
+
+declare
+
+  p1_id paramlist;
+  p1_name varchar2(10) := 'helparams';
+
+begin
+
+  p1_id := get_parameter_list(p1_name);
+  if id_null(p1_id) then
+   
+    p1_id := create_parameter_list(p1_name);
+    if id_null(p1_id) then
+      small_msg('Could not create parameter list '||p1_name||'.','NA',TRUE);
+      raise form_trigger_failure;
+    end if;
+
+  else
+ 
+    small_msg('Parameter list '||p1_name||' already exists!','NA',TRUE);
+
+  end if;
+
+  add_parameter(p1_id, 'HELP_ITEM', TEXT_PARAMETER, help_item);
+  add_parameter(p1_id, 'HELP_BLOCK', TEXT_PARAMETER, help_block);
+  add_parameter(p1_id, 'HELP_FORM', TEXT_PARAMETER, help_form);
+  add_parameter(p1_id, 'HELP_TABLE', TEXT_PARAMETER, help_table);
+  add_parameter(p1_id, 'HELP_APPLICATION', TEXT_PARAMETER, help_application);
+
+  call_form(help_module, no_hide, no_replace, query_only, p1_id);
+
+  destroy_parameter_list(p1_id);
+
+end;
+
+end;
+
+      procedure getMsg(
+         errm  in  char,       /* error text from form*/
+         msg  out  char,       /* error text from db */
+         action out char,      /* action-on-error retrieved from db */
+         errc out char ,
+         rtsf out boolean,
+         msg_source in char) is
+      begin
+      declare
+        aError_code char(8);
+        MessID char(8);
+        Params char(240) := NULL;
+        message_type_ind varchar2(1);
+        cursor mess is
+          select message_code, message_text, message_type_ind, message_help
+          from message_master
+          where message_code = aError_code
+          and   message_source = msg_source;
+      begin
+            aError_code := substr(errm,1,instr(errm,'#')-1);
+            errc := aError_code;
+            Params := substr(errm,instr(errm,'#')+1);
+            open mess;
+            fetch mess into errc, msg, message_type_ind, action;
+            if mess%NOTFOUND then
+              msg := errm;
+              action := 'No help for this message.';
+            end if;
+            close mess;
+          copy(action, 'global.msg_popup_action');
+          IF MESSAGE_TYPE_IND = 'E' then
+            rtsf := TRUE;
+          ELSE
+            rtsf := FALSE;
+          END IF;
+          SubsPlist(msg,Params);
+          SubsPlist(action,Params);
+        EXCEPTION  /* trap invalid numbers */
+          WHEN INVALID_NUMBER THEN
+            msg := errm;
+            action := 'No help for this message.';
+          WHEN VALUE_ERROR THEN
+            msg := errm;
+            action := 'No help for this message.';
+        end;
+      end;
+
+
+      procedure show_msg(
+         errm in char,           /* message */
+         source in char,
+         alert_name in char) is     
+      begin
+      declare
+        msgText  char(80);
+        errAction char(255);   /* action on error */
+        errc     char(8);     /* error code */
+        lAlert_no alert := find_alert(alert_name);
+        nAlert_dummy number;
+        rtsf      boolean := TRUE;
+        param_list paramlist;
+        begin
+        GetMsg(errm,msgText,errAction,errc, rtsf, source);
+
+        change_alert_message(lAlert_no, msgText);
+	set_alert_property(lAlert_no, title, errc);
+        nAlert_dummy := show_alert(lAlert_no);
+        if nAlert_dummy = ALERT_BUTTON2 then
+         param_list := create_parameter_list('Help_Parameters');
+         add_parameter(param_list, 'global_message_code', TEXT_PARAMETER, errc);
+         add_parameter(param_list, 'global_source', TEXT_PARAMETER, source);
+         add_parameter(param_list, 'global_message_text',TEXT_PARAMETER,msgText);
+         add_parameter(param_list, 'global_message_help',TEXT_PARAMETER,errAction);
+         call_form('msghelp',NO_HIDE, NO_REPLACE, QUERY_ONLY, param_list);
+         destroy_parameter_list(param_list);
+        end if;
+        IF rtsf THEN
+           RAISE FORM_TRIGGER_FAILURE;
+        END IF;
+        exception
+          when no_data_found then
+            null;
+        end;
+      end;
+
+
+      procedure small_msg(
+         errm in char,           /* message */
+         source in char,
+         acknowledge in boolean) is     
+      begin
+      declare
+        msgText  char(80);
+        errAction char(255);   /* action on error */
+        errc     char(8);     /* error code */
+        nAlert_dummy number;
+        rtsf      boolean := TRUE;
+        begin
+        GetMsg(errm,msgText,errAction,errc, rtsf, source);
+
+        if acknowledge then
+          message(msgText);
+        else
+          message(msgText, NO_ACKNOWLEDGE);
+        end if;
+
+        IF rtsf THEN
+           RAISE FORM_TRIGGER_FAILURE;
+        END IF;
+        exception
+          when no_data_found then
+            null;
+        end;
+      end;
+
+
+      procedure SubsPlist(str in out char,params in char) is
+      /* This procedure is used by procedure getMessageText */
+      /* Examples at end */
+      begin
+        declare
+          ParamDel constant char(1)    := '%';
+          NullStringReplacement constant char(6) := '(null)';
+          ParamNum integer;
+          PLeft integer;
+          PRight integer:=1;
+          RepLeft integer;
+          RepRight integer;
+          ReplacementString char(256);
+        begin
+      /* loop while parameter substitution entries exist in str */
+          while PRight < LENGTH(str) loop
+            BEGIN
+      <<reloop>>  /* Since no continue function (as in C), have to goto here */
+      /* find location of left parameter delimiter of the next parameter sub */
+              PLeft := instr(str,ParamDel,PRight);
+      /* if no more found in string,  exit loop  */
+              if PLeft = 0 then
+                 exit;
+              end if;
+      /* if the character immediately following the parameter delimiter is not
+         a valid number or valid character for a variable, assume that it is
+         an unadorned % sign and should be skipped (IE: '100% ') */
+              if instr('01234567890abcdefghijklmnopqrstuvwxyz',
+                        lower(substr(str,PLeft+1,1))) = 0 then
+                PRight := PLeft+1; /* set right to be 1 past character */
+                goto reloop;  /* go back to head of loop (continue) */
+              end if;
+      /* find right (closing) parameter delimiter */
+              PRight := instr(str,ParamDel,PLeft+1);
+      /* if there isn't one, assume unadorned % sign (IE '.... 50%') */
+              if PRight = 0 then
+                 exit;
+              end if;
+      /* use TO_NUMBER to extract parameter number. IF not number, EXCEPTION
+         will be used to handle the NAME_IN type parameter */
+              ParamNum := to_number(substr(str,PLeft+1,PRight-PLeft-1));
+      /* find left location of parameter in parameter string  */
+              RepLeft := instr(params,ParamDel,1,ParamNum-1);
+      /* if 0 returned, this means that there is not sufficient parameters
+         defined in the params string */
+              if RepLeft = 0 then
+                 RepLeft := LENGTH(str);
+              end if;
+      /* if 1 returned, this means ParamNum = 1 and dealing with first param */
+              if RepLeft = 1 then
+                 RepLeft := RepLeft-1;
+              end if;
+      /* find right right location of parameter in parameter string */
+              RepRight := instr(params,ParamDel,1,ParamNum);
+      /* if 0 returned, this means there are no more parameter delimiter in
+         parameter string and the rest of the string is for the given param */
+              if RepRight = 0
+                 then RepRight := LENGTH(str)+1;
+              end if;
+      /* extract Replacement string from parameter string. If zero length,
+         the predefine NullStringReplacement will be used (later) */
+              ReplacementString:=substr(params,RepLeft+1,RepRight-RepLeft-1);
+           EXCEPTION  /* if parameter string not all number */
+             WHEN VALUE_ERROR THEN
+      /* using NAME_IN, get value stored in indicated system variable */
+               ReplacementString:=NAME_IN(substr( str,PLeft+1,PRight-PLeft-1));
+           END;
+      /* replace parameter position with replacement string */
+          str := replace(str,substr(str,PLeft,PRight-PLeft+1),
+                         NVL(ReplacementString,NullStringReplacement));
+      /* determine location of character immediately to right of replacement
+         string */
+          PRight := PLeft + Length(ReplacementString)+1;
+          end loop;
+        end;
+      end;

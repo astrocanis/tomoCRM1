@@ -1,0 +1,1883 @@
+
+/* Copyright (c) 1988 by the Oracle Corporation */
+
+
+SQL*FORMS_VERSION = 03.00.16.12.02
+TERSE = ON
+
+DEFINE FORM
+
+   COMMENT = <<<
+   This form is a library form containing several items.
+   First, the block b$ctrl should be copied whenever creating a new form as
+   it contains several fields and procedures that may be used in every form.
+   Secondly, procedures such as b_message, msg_popup and b$chk_char_ref_codes
+    may be used for error and lookup handling.  To see usage for each
+    procedure and trigger in this form, examine the comments in the trigger or
+    procedure.
+   >>>
+
+   NAME = MEMORY
+   TITLE = memory
+   DEFAULT_MENU_APPLICATION = DEFAULT
+
+   DEFINE PROCEDURE
+
+      NAME = AddDays
+      DEFINITION = <<<
+      /* AddDays(StartDate,NumberDays,WeekMask,EndDate)
+       *
+       *  This procedure adds the specified number of work days to
+       *  the passed starting date.  Weekmask determines which days
+       *  are work days and which days are weekend days.  The EndDate
+       *  is the date that corresponds to the passed number of work days
+       *  past the start date.  If the start date is a week end,  the start
+       *  date is assumed to be the first working day after the start date.
+       *  As such, if the start date is Saturday and the number of days is
+       *  one, then the computed EndDate is Tuesday.
+       *
+       * Parameters:
+       *  StartDate      Date       The starting date.
+       *  NumberDays     Number     The number of work day that have
+       *                            to be enclosed in the StartDate to
+       *                            EndDate Range.
+       *  WeekMask       Char(7)    A seven character mask determining
+       *                            which days of the week are workdays
+       *                            and which days are weekend days.
+       *                            The character is position 1 is sunday
+       *                            and 'N' = weekend day, 'Y' = week day
+       * EndDate         Date       The resultant end date
+       */
+      procedure AddDays(day in date,days in number,WeekMask in char,
+                        dout out date) is
+      begin
+      declare
+        NumWorkDays number := 0;  /* Cumultive total for work days */
+        WorkDaysPerWeek number := 0;
+        FullWeeks number := 0;  /* the number of 7-day weeks encompased by
+                                   the specified number of work days. To
+                                   wit, trunc(days/WorkDaysPerWeek) */
+        LastPartial number := 0; /* number of days in the trailing
+                                    partial week.  */
+        CurDow number;           /* Current Day of Week for Partial use */
+        WMask char(7) := 'YYYYYYY';  /* local copy of WeekMask with default
+                                        value - No weekends */
+        direct number := 1;
+        begin
+          /* copy Weekmask to local variable if it is defined, otherwise
+             implicitly use default mask */
+          direct := sign(days);
+          if direct = 0 then direct := 1; end if;
+          if WeekMask is not null then WMask := WeekMask; end if;
+          for CurDow in 1..7 loop     /* go through mask counting work days */
+            if substr(WMask,CurDow,1) = 'Y' then /* if a weekday, count it*/
+              WorkDaysPerWeek := WorkDaysPerWeek + 1;
+            end if;
+          end loop;
+          /* determine number of Full weeks (7-day calendar) */
+          FullWeeks := trunc(days/WorkDaysPerWeek);
+          /* if the number of days is an integer number of Work Weeks
+             then decrement the number of Full Weeks so that the
+             iterative process will operate on the last week.  This is
+             done so that weekend days are not used as ending days */
+          if FullWeeks != 0 and mod(days,WorkDaysPerWeek) = 0 then
+            FullWeeks := FullWeeks - direct;
+          end if;
+          /* Compute number of working days found so far */
+          NumWorkDays := FullWeeks*WorkDaysPerWeek;
+          /* Now go day by day through the last days of the period */
+          CurDow := to_number(to_char(day+FullWeeks*7,'D'));
+          NumWorkDays := NumWorkDays - direct;
+          while NumWorkDays != days loop
+            if substr(WMask,CurDow,1) = 'Y' then
+              NumWorkDays := NumWorkDays + direct;
+            end if;
+            If NumWorkDays = days then exit; end if;
+            LastPartial := LastPartial + direct;
+            CurDow := mod(CurDow+direct+6,7)+1;
+          end loop;
+          dout := day+FullWeeks*7+LastPartial; /* end date is number
+                                                  weeks * 7 plus
+                                                  number of additional days*/
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = AddWorkDays
+      DEFINITION = <<<
+      /* AddWorkDays(calendar_id,start_date,number_work_days,WeekMask,
+                     end_date)
+        This procedure adds the specified number of working days to the passed
+        start date.  */
+      Procedure AddWorkDays(cal_id in number,start_date in date,
+                            Wdays in number,WeekMask in char,
+                            end_date out date) is
+      begin
+      declare
+        Cursdt date := start_date;
+        Enddt date;
+        NumWDays number := 0;
+        CurWdays number := Wdays;
+        WMask char(7) := 'YYYYYYY';
+        EndInside boolean := false;
+        begin
+          if WeekMask is not null then WMask := WeekMask; end if;
+          loop
+            AddDays(Cursdt,CurWdays,WMask,Enddt);  /* find end date
+                                         considering only weekends */
+            NumWDays := NumWDays + CurWdays;
+            EventWorkDaysBetween(Cal_id,Cursdt,Enddt,WMask,CurWdays,
+                                 EndInside);
+            NumWDays := NumWDays - CurWdays;
+            Cursdt := Enddt;
+            if endinside then
+              Cursdt := Cursdt + 1;
+            END IF;
+            if NOT EndInside and NumWDays = Wdays then exit; end if;
+          end loop;
+          end_date := Enddt;
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = B$CALL_FORM
+      DEFINITION = <<<
+      procedure b$call_form(
+        form_name in char,
+        query_attrib in char,
+        visual_attrib in char) is
+      begin
+         :global.call_type := 'STANDARD';
+         if query_attrib = 'Y' then
+           if visual_attrib = 'H' then
+             call_query(form_name, hide);
+           else
+             call_query(form_name, no_hide);
+           end if;
+         else
+           if visual_attrib = 'H' then
+             call(form_name, hide);
+           else
+             call(form_name, no_hide);
+           end if;
+         end if;
+       end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = B$CALL_POPUP
+      DEFINITION = <<<
+      procedure b$call_popup(
+        form_name in char,
+        query_attrib in char,
+        visual_attrib in char,
+        x_coord in number,
+        y_coord in number) is
+      /* This procedure allows the passing of placement parameters to
+         the called form. It should only be used when calling forms whose
+         first block is defined as a popup page, although if it is not, the
+         called form will simply ignore the parameters.                    */
+      begin
+        :global.call_type := 'POPUP';
+        if query_attrib = 'Y' then
+          if visual_attrib = 'H' then
+            call_query(form_name, hide);
+          else
+            :global.x_coord := x_coord;
+            :global.y_coord := y_coord;
+            call_query(form_name, no_hide);
+          end if;
+        else
+          if visual_attrib = 'H' then
+            call(form_name, hide);
+          else
+            :global.x_coord := x_coord;
+            :global.y_coord := y_coord;
+            call(form_name, no_hide);
+          end if;
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = B$CHK_CHAR_REF_CODES
+      DEFINITION = <<<
+      PROCEDURE B$CHK_CHAR_REF_CODES(
+         P_VALUE  IN OUT CHAR      /* Value to be validated  */
+        ,P_DOMAIN IN     CHAR) IS  /* Reference codes domain */
+      /* This trigger checks that the value exists in SYSTEM_REF_CODES      */
+      /* table for the given domain.  It must be either one of the distinct */
+      /* values, or within one of the ranges (high value not null).         */
+      /*    SELECT  decode(REF_HIGH_VALUE, NULL, REF_LOW_VALUE, curr_value)
+          INTO    new_value
+          FROM    SYSTEM_REF_CODES
+          WHERE  ( (REF_HIGH_VALUE IS NULL   AND
+                   curr_value IN  (REF_LOW_VALUE, REF_ABBREVIATION) )  OR
+                  (curr_value BETWEEN  REF_LOW_VALUE AND     REF_HIGH_VALUE)
+                 )
+          AND     ROWNUM = 1
+          AND     REF_DOMAIN = P_DOMAIN;
+          P_VALUE := new_value; */
+      new_value CHAR(240);
+      curr_value CHAR(240);
+      BEGIN
+        curr_value := P_VALUE;
+        IF (curr_value IS NOT NULL) THEN
+          SELECT  REF_VALUE
+          INTO    new_value
+          FROM    SYSTEM_REF_CODES
+          WHERE   curr_value IN  (REF_VALUE, REF_ABBREVIATION)
+          AND     ROWNUM = 1
+          AND     REF_DOMAIN = P_DOMAIN;
+          P_VALUE := new_value;
+        END IF;
+      END;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = B$QUERY_DETAILS
+      DEFINITION = <<<
+      PROCEDURE B$QUERY_DETAILS(
+      go_to_block in char) IS
+      /* Query dependent blocks on the same page, if required. */
+      curr_fld CHAR(61);  /* Field to return cursor to */
+      BEGIN
+        IF (:GLOBAL.AUTO_QUERY = 'Y' AND
+           (:SYSTEM.RECORD_STATUS = 'QUERY' OR
+            :SYSTEM.RECORD_STATUS = 'CHANGED')) THEN
+          /* Save current field */
+          curr_fld := :SYSTEM.CURSOR_FIELD;
+          /* Turn off message handling */
+          :SYSTEM.MESSAGE_LEVEL := 5;
+          go_block(go_to_block);
+          chk_PACKAGE_FAILURE;
+          execute_query;
+          /* Return to default message handling */
+          :SYSTEM.MESSAGE_LEVEL := 0;
+          /* Return cursor to original field */
+          go_field(curr_fld);
+          chk_PACKAGE_FAILURE;
+        END IF;
+      END;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = B$SHOW_FIELD
+      DEFINITION = <<<
+      procedure b$show_field(infield in char,  /* The field to be checked. */
+                show_type in char     /* The attribute to set for the field */
+                ) is
+      /* This procedure allows setting intensity or other visual parameters
+         set in the oraterm for a given field.  An example of this might be
+         Menu-Item-Enabled.  To call this procedure, use the following:
+            b$show_field(':one.check_value','Menu-Item-Enabled');
+         Note: it is required that the field and the attribute value be
+               enclosed in single quotes.
+         This procedure may be referenced
+                                                                             */
+      begin
+        if field_characteristic(infield, DISPLAYED) = 'TRUE' then
+           display_field(infield,show_type);
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = B$TOGGLE
+      DEFINITION = <<<
+      PROCEDURE B$TOGGLE IS
+      /* Toggle query mode between 'Always query' and 'Never query', and     */
+      /* display the new mode to the user on the message line.               */
+      /* Also fire text of new mode to toggle fields in page headers/footers */
+      BEGIN
+        IF :GLOBAL.AUTO_QUERY = 'Y' THEN
+          :GLOBAL.AUTO_QUERY := 'N';
+          b_message('SYS-I-01005#off');
+          :b$ctrl.CTRL$AUTO_QUERY := '----';
+        ELSE
+          :GLOBAL.AUTO_QUERY := 'Y';
+          :b$ctrl.CTRL$AUTO_QUERY := '-AQ-';
+          b_message('SYS-I-01005#on');
+        END IF;
+      END;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = DayStatus
+      DEFINITION = <<<
+      /* DayStatus(calendar_id,day,WeekMask,status)
+         This procedure determines if the specified day is a working or
+         non-working day.  If it is a working day, status='WORKING' otherwise
+         status = 'NON-WORKING'.  */
+      procedure DayStatus(cal_id in number,day in date,WeekMask in char,
+                          status out char) is
+         begin declare
+         WMask char(7) := 'YYYYYYY';
+         Cursor Event(c_id number,day date) is
+           select a.event_type_code
+             from EVENTS a
+            where a.cal_id = c_id
+              and day between a.start_date and a.end_date
+              and a.event_type_code in ('DOFF','DON');
+        Etype EVENTS.EVENT_TYPE_CODE%type;
+        begin
+          if WeekMask is not null then WMask := WeekMask; end if;
+          Open Event(cal_id,day);
+          Fetch Event into Etype;
+          if Event%Found and Etype = 'DOFF' then
+            status := 'NON-WORKING';
+          elsif Event%Found and Etype = 'DON' then
+            status := 'WORKING';
+          elsif Event%Notfound and
+                substr(WMask,to_number(to_char(day,'d')),1) = 'N' then
+            status := 'NON-WORKING';
+          else
+            status := 'WORKING';
+          end if;
+          Close Event;
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = EventWorkDaysBetween
+      DEFINITION = <<<
+      /* EventWorkDaysBetween(calendar_id,start_date,end_date,
+                              WeekMask,NumberWorkDays,
+                              EndDateInsideIntervalFlag)
+         This routine determines the number of work days in the passed
+         date interval that are already slotted as events (per the calender
+         referenced by calendar_id.  If the end date falls within an event
+         date interval, the Boolean EndDateInsideIntervalFlas is set to
+         true, otherwise it's set to false.
+         If the start_date is after the end_date, the NumberWorkDays
+         parameter is negative.
+       */
+      Procedure EventWorkDaysBetween(cal_id in number,sdt in date,edt in date,
+                                      WeekMask in char, days out number,
+                                      EndInside out boolean) is
+      begin
+        declare
+          /* Since this suite of routine work with both positive and negative
+             days,  the Events cursor has two parameters.  depending on the
+             order of the sdt and edt, either (sdt,edt) or (edt,sdt) is passed
+             as parameters.  This is so that the "betweens" work as expected.
+          */
+          Cursor Evnts(sdt date,edt date) is
+            select a.event_type_code,greatest(a.start_date,sdt),
+                   least(a.end_date+1,edt)
+              from EVENTS a
+             where a.cal_id = cal_id
+               and (a.start_date between sdt        and edt      or
+                    a.end_date   between sdt        and edt      or
+                    sdt          between start_date and end_date or
+                    edt          between start_date and end_date)
+               and a.event_type_code IN ('DOFF','DON')
+             order by a.start_date;
+          Ftype EVENTS.event_type_code%TYPE;  /* type of fetched event */
+          Fsdt date;                        /* starting date of fetched event
+                                               (potentially modified via
+                                                least() function */
+          Fedt date;                        /* ending date of fetched event
+                                               (potentially modified via
+                                               greatest() function */
+          Prevsdt date;                     /* To prevent overlapping events
+                                               from contributing more then
+                                               they should, the previous start
+                                               and end date is stored and
+                                               overlaps are accounted for */
+          Prevedt date;
+          EvDays number;                   /* the number of event related work
+                                              days determined at each pass of
+                                              the main loop */
+          TotalEvDays number := 0;         /* the running total of event
+                                              related work days */
+          begin
+            if edt > sdt then
+              open Evnts(sdt,edt);
+            else
+              open Evnts(edt,sdt);
+            end if;
+            fetch Evnts into Ftype,Fsdt,Fedt;
+            Prevsdt := Fsdt -1;
+            Prevedt := Fsdt -1;
+            while Evnts%FOUND loop
+              if Fsdt < Prevedt then  /* if new start date is overlapped by
+                                         previous end date, set start date to
+                                         previous end date */
+                Fsdt := Prevedt;
+              end if;
+              if Fedt > Fsdt then     /* if the range is still valid */
+                if Ftype = 'DOFF' THEN
+                  WorkDaysBetween(Fsdt,Fedt,WeekMask,EvDays);
+                elsif Ftype = 'DON' THEN
+                  EvDays := Fsdt - Fedt - 1;
+                end if;
+                TotalEvDays := TotalEvDays + EvDays;
+              end if;
+              if Fedt > Prevedt then
+                Prevedt := Fedt;
+              end if;
+              Prevsdt := Fsdt;
+              Fetch Evnts into Ftype,Fsdt,Fedt;
+            end loop;
+            Close Evnts;
+            if edt between Fsdt and Fedt then
+              EndInside := true;
+            else
+              EndInside := false;
+            end if;
+            if sdt > edt then
+              days := -TotalEvDays;
+            else
+              days := TotalEvDays;
+            end if;
+          end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = GetWeekMask
+      DEFINITION = <<<
+      /* GetWeekMask(calendar_id,WeekMask)
+        This procedure loads the weekmask for the given Calendar ID.  The
+        weekend days are store in the EVENTS table as an event whose type
+        is WMASK and description is the mask */
+      Procedure GetWeekMask(calendar_id in number,weekmask out char) is
+      begin
+      /* define standard work day mask. Initially, all seven day are considered
+         work days.Day of week=1234567
+                           Day=SMTWTFS   */
+      DECLARE
+        WorkDays   char(7) := 'YYYYYYY';
+        dow        integer; /* day of week */
+        Cursor W_D is
+           select description from EVENTS a
+            where a.cal_id = calendar_id
+              and a.event_type_code = 'WMASK';
+        BEGIN
+          OPEN W_D;
+          FETCH W_D INTO WorkDays;
+          CLOSE W_D;
+          weekmask := WorkDays;
+        END;
+      END;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = SubstituteParameters
+      DEFINITION = <<<
+      procedure SubstituteParameters(str in out char,params in char) is
+      /* This procedure is used by procedure getMessageText */
+      /* Examples at end */
+      begin
+        declare
+          ParamDel constant char(1)    := '%';
+          NullStringReplacement constant char(6) := '(null)';
+          ParamNum integer;
+          PLeft integer;
+          PRight integer:=1;
+          RepLeft integer;
+          RepRight integer;
+          ReplacementString char(256);
+        begin
+      /* loop while parameter substitution entries exist in str */
+          while PRight < LENGTH(str) loop
+            BEGIN
+      <<reloop>>  /* Since no continue function (as in C), have to goto here */
+      /* find location of left parameter delimiter of the next parameter sub */
+              PLeft := instr(str,ParamDel,PRight);
+      /* if no more found in string,  exit loop  */
+              if PLeft = 0 then
+                 exit;
+              end if;
+      /* if the character immediately following the parameter delimiter is not
+         a valid number or valid character for a variable, assume that it is
+         an unadorned % sign and should be skipped (IE: '100% ') */
+              if instr('01234567890abcdefghijklmnopqrstuvwxyz',
+                        lower(substr(str,PLeft+1,1))) = 0 then
+                PRight := PLeft+1; /* set right to be 1 past character */
+                goto reloop;  /* go back to head of loop (continue) */
+              end if;
+      /* find right (closing) parameter delimiter */
+              PRight := instr(str,ParamDel,PLeft+1);
+      /* if there isn't one, assume unadorned % sign (IE '.... 50%') */
+              if PRight = 0 then
+                 exit;
+              end if;
+      /* use TO_NUMBER to extract parameter number. IF not number, EXCEPTION
+         will be used to handle the NAME_IN type parameter */
+              ParamNum := to_number(substr(str,PLeft+1,PRight-PLeft-1));
+      /* find left location of parameter in parameter string  */
+              RepLeft := instr(params,ParamDel,1,ParamNum-1);
+      /* if 0 returned, this means that there is not sufficient parameters
+         defined in the params string */
+              if RepLeft = 0 then
+                 RepLeft := LENGTH(str);
+              end if;
+      /* if 1 returned, this means ParamNum = 1 and dealing with first param */
+              if RepLeft = 1 then
+                 RepLeft := RepLeft-1;
+              end if;
+      /* find right right location of parameter in parameter string */
+              RepRight := instr(params,ParamDel,1,ParamNum);
+      /* if 0 returned, this means there are no more parameter delimiter in
+         parameter string and the rest of the string is for the given param */
+              if RepRight = 0
+                 then RepRight := LENGTH(str)+1;
+              end if;
+      /* extract Replacement string from parameter string. If zero length,
+         the predefine NullStringReplacement will be used (later) */
+              ReplacementString:=substr(params,RepLeft+1,RepRight-RepLeft-1);
+           EXCEPTION  /* if parameter string not all number */
+             WHEN VALUE_ERROR THEN
+      /* using NAME_IN, get value stored in indicated system variable */
+               ReplacementString:=NAME_IN(substr( str,PLeft+1,PRight-PLeft-1));
+           END;
+      /* replace parameter position with replacement string */
+          str := replace(str,substr(str,PLeft,PRight-PLeft+1),
+                         NVL(ReplacementString,NullStringReplacement));
+      /* determine location of character immediately to right of replacement
+         string */
+          PRight := PLeft + Length(ReplacementString)+1;
+          end loop;
+        end;
+      end;
+      /* EXAMPLES:
+      Passed In: str    = 'No records exist in %1% for group %2%'
+                 params = 'PP_PRODUCTS%MER11'
+      Results  : str    = 'No records exist in PP_PRODUCTS for group MER11'
+      Passed In: str    = 'Warranty flag=%system.cursor_value%, must be Y or N'
+                 params = (null)
+                 system.cursor_value = 'T'
+      Results  : str    = 'Warranty flag=T, must be Y or N'
+      Passed In: str    = '%1% is %2%% specified, must be 100% specified'
+                 params = 'BOM%70'
+      Results  : str    = 'BOM is 70% specified, must be 100% specified'
+      */
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = WorkDaysBetween
+      DEFINITION = <<<
+      /* WorkDaysBetween(StartDate,EndDate,WeekMask,NumberWorkDays)
+         This procedure determines the number of weekdays (as defined by
+         weekmask) within the passed interval. If the StartDate is greater
+         then the EndDate then the NumberWorkDays is negative
+      */
+      Procedure WorkDaysBetween(startdt in date,enddt in date,WeekMask in char,
+                                days out number) is
+      begin
+      declare
+        CurDt date;
+        TargetDt date;
+        NumWork number;  /* local variable */
+        WMask char(7) := 'YYYYYYY';
+        FullWeeks number;
+        CurDow number;
+        WorkDaysPerWeek number := 0;
+        mult number := 1;
+        begin
+          if WeekMask is not null then WMask := WeekMask; end if;
+          if startdt > enddt then
+            mult := -1;
+            CurDt := enddt;
+            TargetDt := startdt;
+          else
+            CurDt := startdt;
+            TargetDt := enddt;
+          end if;
+          for CurDow in 1..7 loop
+            if substr(WMask,CurDow,1) = 'Y' then
+              WorkDaysPerWeek := WorkDaysPerWeek + 1;
+            end if;
+          end loop;
+          FullWeeks := trunc((TargetDt-CurDt)/7);
+          NumWork := FullWeeks*WorkDaysPerWeek;
+          CurDt := CurDt + FullWeeks*7;
+          while CurDt <= TargetDt loop
+            if substr(WMask,to_number(to_char(CurDt,'D')),1) = 'Y' then
+              NumWork := NumWork +1;
+            end if;
+            CurDt := CurDt +1;
+          end loop;
+          days := (NumWork-1) * mult;
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$auto_number
+      DEFINITION = <<<
+      /* This will automatically number a field such as note_number.  It
+         should be called from a pre-insert or pre-update trigger.  The
+         variables 'number_origin_field' and 'primary_field' should have
+         substitution for the field to be numbered and a mandatory field on
+         the record.  The mandatory field is the check on the 'LOOP' section
+         for NULL that causes the numbering to stop.                         */
+      procedure b$auto_number is
+      begin
+      declare
+        number_origin_field char(31);
+        primary_field char(31);
+        nOld_value number;
+      begin
+        first_record;
+        number_origin_field := 1;
+        nOld_value := 1;
+        while primary_field is not null loop
+          nOld_value := nOld_value + 1;
+          number_origin_field := nOld_value;
+        end loop;
+      end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$check_access
+      DEFINITION = <<<
+      procedure b$check_access is
+      /* This procedure retrieves accesss and security information regarding
+         a user and restrictions placed on the user for the screen.
+         This procedure may be referenced.                                   */
+      begin
+      declare
+        field_name   char(61);
+        cursor access_detail is
+          select upd.program_block, upd.program_field, upd.query_flag,
+                 upd.enterable_flag, upd.update_flag, upd.echo_flag
+          from user_program_details upd
+          where upd.username = user
+          and   upd.program_name = upper(:system.current_form);
+        access_det access_detail%rowtype;
+      begin
+        select insert_flag, update_flag, delete_flag
+        into :b$ctrl.ctrl$insert, :b$ctrl.ctrl$update, :b$ctrl.ctrl$delete
+        from user_program_register upr
+        where upr.username = user
+        and   upr.program_name = upper(:system.current_form);
+        open access_detail;
+        loop
+          fetch access_detail into access_det;
+          exit when access_detail%notfound;
+          field_name := access_det.program_block||'.'||access_det.program_field;
+          if access_det.query_flag = 'N' then
+            set_field(field_name, echo, attr_off);
+            set_field(field_name, enterable, attr_off);
+            set_field(field_name, queryable, attr_off);
+          elsif :b$ctrl.ctrl$insert = 'N' or access_det.enterable_flag = 'N' then
+            set_field(field_name, enterable, attr_off);
+          elsif :b$ctrl.ctrl$update = 'N' or  access_det.update_flag = 'N' then
+            set_field(field_name, updateable, attr_off);
+          end if;
+          end loop;
+          close access_detail;
+          exception
+            when no_data_found then
+              null;
+          end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$disable_access
+      DEFINITION = <<<
+      /* This procedure accepts the action type as input and checks for the
+         appropriate permission in the b$ctrl block for insert, update and
+         delete activities based on tabled information regarding the user
+         and screen.
+         This procedure may be referenced.                                   */
+      procedure b$disable_access(action in char) is
+      begin
+        if action = 'INSERT' then
+          if :b$ctrl.ctrl$insert = 'N' then
+            msg_popup('SYS-E-00001#Insert','E',TRUE);
+          end if;
+        elsif
+          action = 'DELETE' then
+            if :b$ctrl.ctrl$delete = 'N' then
+              msg_popup('SYS-E-00001#Delete','E',TRUE);
+            end if;
+        elsif
+          action = 'UPDATE' then
+            if :b$ctrl.ctrl$update = 'N' then
+              msg_popup('SYS-E-00001#Update','E',TRUE);
+            end if;
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$getmessagetext
+      DEFINITION = <<<
+      procedure b$getmessagetext(
+      error_code_q in char) is
+      begin
+      declare
+        errm  char(240);
+        begin
+          select message_text
+          into errm
+          from error_codes
+          where error_code = error_code_q;
+        exception
+          when no_data_found then
+            message('Internal error: error table not found - Call system admin');
+            raise form_trigger_failure;
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$key_startup
+      DEFINITION = <<<
+      procedure b$key_startup is
+      /* This procedure is a specific procedure to set global parameters
+         used throughout the form. It may help define location information
+         in terms of popup page positioning, etc.                       */
+      begin
+        if application_characteristic(calling_form) not in ('MAINMENU',
+                 'mainmenu',NULL) then
+          :b$ctrl.ctrl$x_coord := :global.x_coord;
+          if :global.call_type = 'POPUP' then
+            anchor_view(1,:global.x_coord, :global.y_coord);
+            :global.x_coord := NULL;
+            :global.y_coord := NULL;
+            :global.call_type := NULL;
+          end if;
+        end if;
+        begin
+          hide_menu;
+          select sysdate, user, sysdate, user
+          into :b$ctrl.ctrl$sysdate, :b$ctrl.ctrl$user, :b$ctrl.ctrl$moddate,
+               :b$ctrl.ctrl$moduser
+          from sys.dual;
+        exception
+          when no_data_found then
+            msg_popup('No row in table sys.dual', 'F',TRUE);
+          when too_many_rows then
+            msg_popup('More than one row in sys.dual','F',TRUE);
+        end;
+        begin
+          b$check_access;
+          exception
+            when no_data_found then
+              null;
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$last_record
+      DEFINITION = <<<
+      procedure b$last_record is
+      /* This procedure checks to verify that the cursor is in the last record
+         in the retrieval set and calls the verification procedure,
+         b$disable_access, with the type INSERT.
+         This procedure may be referenced.                                   */
+      begin
+        if :system.last_record = 'TRUE' then
+          b$disable_access('INSERT');
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$no_block
+      DEFINITION = <<<
+      procedure b$no_block(
+        prev_next in char) is
+      begin
+        b_message('2#'||prev_next||'%');
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$pre_delete
+      DEFINITION = <<<
+      procedure b$pre_delete is
+      begin
+        if :b$ctrl.ctrl$delete = 'N' then
+          msg_popup('1#Delete', 'E', TRUE);
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$pre_insert
+      DEFINITION = <<<
+      procedure b$pre_insert is
+      begin
+        if :b$ctrl.ctrl$insert = 'N' then
+          msg_popup('1#Create', 'E', TRUE);
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$pre_update
+      DEFINITION = <<<
+      procedure b$pre_update is
+      begin
+        if :b$ctrl.ctrl$update = 'N' then
+          msg_popup('1#Update', 'E', TRUE);
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b$who_when
+      DEFINITION = <<<
+      procedure b$who_when(
+          b$who in out char,
+          b$when in out date) is
+      begin
+        b$who := :b$ctrl.ctrl$user;
+        b$when := :b$ctrl.ctrl$sysdate;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = b_message
+      DEFINITION = <<<
+      procedure b_message(
+        errm in char ) is  /* character to show on screen via message() */
+      /*
+       * This procedure uses the SubstituteParameters and getMessageText
+       * procedures.
+       *
+       *-----------------------------------------------------------------
+       * CHANGE HISTORY:
+       * DATE   PERSON     CHANGE
+       *------- ---------- ----------------------------------------------
+       *
+       */
+      begin
+        declare
+          ErrText char(255);  /* will hold results of GetMessageText */
+          ErrAction char(255);
+          errc char(13); /*error code */
+        begin
+        GetMessageText(errm,ErrText,errAction,errc);
+        /* message() will truncate text to 80 characters silently */
+        message(errc||': '||ErrText);
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = chk_package_failure
+      DEFINITION = <<<
+      procedure chk_package_failure is
+      begin
+        if not form_success then
+          raise form_trigger_failure;
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = getMessageText
+      DEFINITION = <<<
+      procedure getMessageText(
+         errm  in  char,       /* error text from form*/
+         msg  out  char,       /* error text from db */
+         action out char,      /* action-on-error retrieved from db */
+         errc out char ) is
+      /*
+       * This procedure uses the procedure SubstituteParameters.
+       * It also is used by procedures msg_popup and b_message
+       *
+       * ----------------------------------------------------------------
+       * CHANGE HISTORY:
+       * DATE   PERSON       CHANGE
+       * ------ ------------ --------------------------------------------
+       *
+       */
+      begin
+      declare
+        aError_code char(13);
+        MessID number;
+        Params char(256) := NULL;
+        cursor mess is
+          select error_code, error_text, error_action
+          from error_codes
+          where error_id = MessID;
+        cursor mess2 is
+          select error_text, error_action
+          from error_codes
+          where error_code = aError_code;
+        begin
+          if instr(errm,'#') = 0 then  /* no # in string */
+            MessID := to_number(errm);
+          else
+            aError_code := substr(errm,1,instr(errm,'#')-1);
+            errc := aError_code;
+            break;
+            if instr(aError_code,'-') = 0 then
+              MessId := to_number(substr(errm,1,instr(errm,'#')-1));
+              Params := substr(errm,instr(errm,'#')+1);
+              open mess;
+              fetch mess into errc,msg,action; /* get first (and only) row from table
+           */
+              if mess%NOTFOUND then  /* if not found, return passed number */
+                 msg := errm;
+                 action := NULL;
+              end if;
+              close mess;   /* close cursor */
+            else
+              Params := substr(errm,instr(errm,'#')+1);
+              open mess2;
+              fetch mess2 into msg, action;
+              if mess2%NOTFOUND then
+                msg := errm;
+                action := NULL;
+              end if;
+            close mess2;
+          end if;
+          end if;
+          :global.msg_popup_action := action;
+          SubstituteParameters(msg,Params);
+          SubstituteParameters(action,Params);
+        EXCEPTION  /* trap invalid numbers */
+          WHEN INVALID_NUMBER THEN
+            msg := errm;
+            action := NULL;
+          WHEN VALUE_ERROR THEN
+            msg := errm;
+            action := NULL;
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = getline
+      DEFINITION = <<<
+      procedure getline ( in_str in char,
+                          fld in char,
+                          len in number,
+                          spa in out number
+                        ) is
+      /* TASK: to find the end of the last whole word in the string and
+       *       copy the value of the string to this point into fld
+       * PARAMETERS: in_str - String to check
+       *             fld    - Name of the field to insert into
+       *             len    - length of fld plus 1
+       *             spa    - the postion of the last space (from RHS)
+       */
+      begin
+        /*
+         * initialise spa
+         */
+        spa := 0;
+        /*
+         * check if in_str can fit into the field
+         */
+        if (length(in_str) >= len)
+        then
+          /*
+           * find the position of the first space from RHS
+           */
+          loop
+            if (spa = len)
+            then
+              /* no spaces; word length > field length  */
+              exit;
+            else
+              if (substr(in_str, len-spa, 1) = ' ')
+              then
+                /* space found spa contains its postion */
+                exit;
+              else
+                spa := spa + 1;
+              end if;
+            end if;
+          end loop;
+          if (spa = len) OR  -- word length greater than field length
+             (spa = 0)       -- string fits perfectly
+          then
+            /*
+             * effectively no spaces found so copy as much as poss.
+             */
+            spa := 0;
+            copy(substr(in_str, 1, len - 1), fld);
+          else
+            /*
+             * copy up until the position of the last space
+             */
+            copy(substr(in_str, 1, len - spa), fld);
+          end if;
+        else
+          /*
+           * input string length < fld length so copy all
+           */
+          copy(in_str, fld);
+        end if;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = msg_popup
+      DEFINITION = <<<
+      procedure msg_popup(
+         errm in char,           /* message */
+         errt in char,           /* message type */
+         rftf in boolean) is     /* raise form_trigger_failure ? */
+      /*
+       * This procedure uses the SubstituteParameter and getMessageText
+       * procedures.
+       *
+       * ----------------------------------------------------------------
+       * CHANGE HISTORY:
+       * DATE   PERSON      CHANGE
+       * ------ ----------- ---------------------------------------------
+       *
+       */
+      begin
+      declare
+        msgText  char(255);
+        errAction char(255);   /* action on error */
+        errc     char(13);     /* error code */
+        message_path char(60) := 'MESSAGE';
+        cursor get_message is
+          select message_path_and_form
+          from config_options;
+        begin
+        GetMessageText(errm,msgText,errAction,errc);
+        :global.msg_popup_errc := errc;
+        :global.msg_popup_errm := msgText;
+        :global.msg_popup_action := errAction;
+        :global.msg_popup_errt := errt;
+        open get_message;
+        fetch get_message into message_path;
+        :global.show_message := message_path;
+        call_query(:global.show_message, no_hide);
+        -- call_query('MESSAGE', NO_HIDE);
+        IF NOT FORM_SUCCESS THEN
+           message('Internal Error: Unable to call form MESSAGE');
+           RAISE FORM_TRIGGER_FAILURE;
+        END IF;
+        IF rftf THEN
+           RAISE FORM_TRIGGER_FAILURE;
+        END IF;
+        exception
+          when no_data_found then
+            null;
+        end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = msg_popup1
+      DEFINITION = <<<
+      procedure msg_popup1(
+         errc in char,
+         errt in char,
+         rftf in boolean) is
+      /* This procedure calls the error message form, passing the message,
+         text and whether form_trigger_failure is to occur to stop
+         processing.                                                    */
+      begin
+        declare
+        errm char(240);
+        begin
+        :global.error_code := errc;
+        :global.msg_popup_errt := errt;
+        b$getmessagetext(errc);
+        :global.msg_popup_errm := errm;
+        call_query('message', no_hide);
+        if not form_success then
+          message('Internal error: error form not found!');
+          raise form_trigger_failure;
+        end if;
+        if rftf then
+          raise form_trigger_failure;
+        end if;
+      end;
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = word_wrap_4
+      DEFINITION = <<<
+      procedure word_wrap_4 ( source in char,
+                            fld1 in char, fld2 in char,
+                            fld3 in char, fld4 in char,
+                            fld_width in number) is
+      /* TASK: to cut up the string stored insource wrapping on words and store
+       *       the results in the fields.
+       *        NOTE: fields must be passed in correct sequence
+       * PARAMETERS: source    - the string to be cut up
+       *             fld1,
+       *             fld2,
+       *             fld3,
+       *             fld4      - Name of the fields to store pieces of source
+       *             fld_width - the width of fld(1-4)
+       */
+      width_plus_1 number(3); /* fld_width+1; used to check exact fit */
+      back number(3);         /* position of last space (from right hand end)*/
+      in_str char(240);       /* copy of source used in manipulation */
+      begin
+        /* initialise variables */
+        width_plus_1 := fld_width + 1;
+        /*
+         * strip leading blanks
+         */
+        in_str := ltrim(source);
+        /*
+         * create first field and get rid of used values
+         */
+        getline(in_str, fld1, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         *  create second field and get rid of used values
+         */
+        getline(in_str, fld2, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         * create third field and get rid of used values
+         */
+        getline(in_str, fld3, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         * chuck as much as poss. into field 4
+         */
+        copy(substr(in_str, 1, fld_width), fld4);
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE PROCEDURE
+
+      NAME = word_wrap_8
+      DEFINITION = <<<
+      procedure word_wrap_8 ( source in char,
+                            fld1 in char, fld2 in char,
+                            fld3 in char, fld4 in char,
+                            fld5 in char, fld6 in char,
+                            fld7 in char, fld8 in char,
+                            fld_width in number) is
+      /* TASK: to cut up the string stored insource wrapping on words and store
+       *       the results in the fields.
+       *        NOTE: fields must be passed in correct sequence
+       * PARAMETERS: source    - the string to be cut up
+       *             fld1,
+       *             fld2,
+       *             fld3,
+       *             fld4,
+       *             fld5,
+       *             fld6,
+       *             fld7,
+       *             fld8,     - Name of the fields to store pieces of source
+       *             fld_width - the width of fld(1-4)
+       */
+      width_plus_1 number(3); /* fld_width+1; used to check exact fit */
+      back number(3);         /* position of last space (from right hand end)*/
+      in_str char(240);       /* copy of source used in manipulation */
+      begin
+        /* initialise variables */
+        width_plus_1 := fld_width + 1;
+        /*
+         * strip leading blanks
+         */
+        in_str := ltrim(source);
+        /*
+         * create first field and get rid of used values
+         */
+        getline(in_str, fld1, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         *  create second field and get rid of used values
+         */
+        getline(in_str, fld2, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         * create third field and get rid of used values
+         */
+        getline(in_str, fld3, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         * create fourth field and get rid of used values
+         */
+        getline(in_str, fld4, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         * create fifth field and get rid of used values
+         */
+        getline(in_str, fld5, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         * create sixth field and get rid of used values
+         */
+        getline(in_str, fld6, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         * create seventh field and get rid of used values
+         */
+        getline(in_str, fld7, width_plus_1, back);
+        in_str := ltrim(substr(in_str, width_plus_1-back));
+        /*
+         * chuck as much as poss. into field 8
+         */
+        copy(substr(in_str, 1, fld_width), fld8);
+      end;
+      >>>
+
+   ENDDEFINE PROCEDURE
+
+   DEFINE TRIGGER
+
+      COMMENT = <<<
+      REFERENCE. Sets global variables to null prior to form
+      processing.
+      >>>
+
+      NAME = PRE-FORM
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        :global.help_column := NULL;
+        :global.dummy := NULL;
+        :global.current_table := NULL;
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      NAME = PRE-INSERT
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        b$disable_access('INSERT');
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      NAME = PRE-UPDATE
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        b$disable_access('UPDATE');
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      NAME = PRE-DELETE
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        b$disable_access('DELETE');
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      COMMENT = <<<
+      REFERENCE.  Replaces some ORACLE and SQL*Forms errors with
+      application messages.
+      >>>
+
+      NAME = ON-ERROR
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+         if error_code = 40010 then
+           msg_popup('SYS-E-10001#Form not found or not available','E',TRUE);
+         elsif error_code in (40014,40024) then
+           msg_popup('SYS-E-10002#Unable to call the form - low memory','E',TRUE);
+         elsif error_code = 40100 then
+           b_message('SYS-I-01006#');
+         elsif error_code = 40102 then
+           msg_popup('SYS-E-10003#Record must be entered or deleted','E',TRUE);
+         elsif error_code = 40200 then
+           msg_popup('SYS-I-10004#','I',TRUE);
+         elsif error_code = 40201 then
+           msg_popup('SYS-I-10005#','I',TRUE);
+         elsif error_code = 40202 then
+           msg_popup('SYS-E-10006#This field is mandatory','E', TRUE);
+         elsif error_code = 40209 then
+           msg_popup('Invalid Date - Please Re-Enter','E',TRUE);
+         else
+           b_message('ORA | '||to_char(error_code)||' : '||error_text);
+         end if;
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      COMMENT = <<<
+      REFERENCE. If the values in the form have been modified
+      (or are new) then turn off clear_form.
+      >>>
+
+      NAME = key-clrfrm
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        clear_form;
+        if :system.form_status = 'CHANGED' then
+          raise form_trigger_failure;
+        end if;
+      end;
+      begin
+        b$key_startup;
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      NAME = KEY-CREREC
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        b$disable_access('INSERT');
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      NAME = KEY-DELREC
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        b$disable_access('DELETE');
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      COMMENT = <<<
+      REFERENCE.  Calls the FastPath screen.
+      >>>
+
+      NAME = KEY-F0
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        call('fastpath',no_hide);
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      COMMENT = <<<
+      REFERENCE.  Calls the Network screen.
+      >>>
+
+      NAME = KEY-F1
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      begin
+        call('network',no_hide);
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      COMMENT = <<<
+      COPY.
+      >>>
+
+      NAME = key-help
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      /* This trigger sets global variables and calls the help form. */
+      declare
+        help_path char(60) default 'HELPFRM1';
+        cursor get_help is
+          select help_path_and_form
+          from config_options;
+      begin
+        :global.help_form := :system.current_form;
+        :global.application_version := '1.0';
+        :global.help_application := 'BALANCE';
+        :global.help_title_1 := 'Set up help1 for '||:system.current_form;
+        :global.help_title_2 := 'Set up help2 for '||:system.current_form;
+        :global.help_block := :system.cursor_block;
+        :global.help_field := :system.cursor_field;
+        :global.help_table := block_characteristic(:system.cursor_block,
+                                                    base_table);
+        open get_help;
+        fetch get_help into help_path;
+        :global.show_help := help_path;
+        if field_characteristic(:system.cursor_field,auto_help) = 'TRUE' then
+          :global.dummy := NULL;
+          -- call_query('helpfrm1', no_hide);
+          call_query(:global.show_help, no_hide);
+          if not form_success then
+            msg_popup('Unable to call help form - Contact Admin.', 'F', TRUE);
+          end if;
+        else
+          if :system.cursor_field = :global.dummy then
+            :global.dummy := NULL;
+            -- call_query('helpfrm1', no_hide);
+            call_query(:global.show_help, no_hide);
+            if not form_success then
+              msg_popup('Unable to call help form - Contact Admin.','F',TRUE);
+            end if;
+          else
+            :global.dummy := :system.cursor_field;
+          end if;
+        end if;
+      exception
+        when no_data_found then
+          null;
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      COMMENT = <<<
+      COPY.
+      >>>
+
+      NAME = KEY-MENU
+      TRIGGER_TYPE = V3
+      DESCRIPTION = Toggle Query Mode
+      TEXT = <<<
+      /* B$TOGGLE_QUERY_MODE */
+      /* This changes the mode of block synchronization so that if it is    */
+      /* currently 'Always', then it is changed to 'Never', and vice-versa. */
+      /* It also queries the dependent blocks as appropriate for the        */
+      /* new mode.                                                          */
+      BEGIN
+        B$TOGGLE;
+        /* The following statement has been commented. In order for this to */
+        /* work, a valid block name, in quotes, must be substituted for     */
+        /* <block name> */
+        /* B$QUERY_DETAILS(<block name>); */
+      END;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE TRIGGER
+
+      COMMENT = <<<
+      COPY.
+      >>>
+
+      NAME = key-startup
+      TRIGGER_TYPE = V3
+      TEXT = <<<
+      BEGIN
+        hide_menu;
+        default_value('Y', 'GLOBAL.AUTO_QUERY');
+        :b$ctrl.CTRL$AUTO_QUERY := '-AQ-';
+        b$show_field('b$ctrl.ctrl$auto_query', 'Menu-item-enabled');
+      END;
+      begin
+        b$key_startup;
+      end;
+      >>>
+
+   ENDDEFINE TRIGGER
+
+   DEFINE BLOCK
+
+      COMMENT = <<<
+      This block should be copied.
+      >>>
+
+      NAME = b$ctrl
+      ROWS_DISPLAYED = 1
+      BASE_LINE = 1
+      LINES_PER_ROW = 0
+      ARRAY_SIZE = 0
+
+      DEFINE FIELD
+
+         NAME = ctrl$sysdate
+         DATATYPE = DATE
+         LENGTH = 11
+         DISPLAY_LENGTH = 11
+         QUERY_LENGTH = 11
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 1
+         COLUMN = 1
+         INPUT_MASK = DD-MON-YYYY
+         OUTPUT_MASK = DD-MON-YYYY
+         EDIT_WORD_WRAP = OFF
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$user
+         DATATYPE = CHAR
+         LENGTH = 30
+         DISPLAY_LENGTH = 30
+         QUERY_LENGTH = 30
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 4
+         COLUMN = 1
+         EDIT_WORD_WRAP = OFF
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$moduser
+         DATATYPE = CHAR
+         LENGTH = 30
+         DISPLAY_LENGTH = 30
+         QUERY_LENGTH = 30
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 6
+         COLUMN = 1
+         EDIT_WORD_WRAP = OFF
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$moddate
+         DATATYPE = DATE
+         LENGTH = 11
+         DISPLAY_LENGTH = 11
+         QUERY_LENGTH = 11
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 8
+         COLUMN = 1
+         INPUT_MASK = DD-MON-YYYY
+         OUTPUT_MASK = DD-MON-YYYY
+         EDIT_WORD_WRAP = OFF
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$x_coord
+         DATATYPE = NUMBER
+         LENGTH = 3
+         DISPLAY_LENGTH = 3
+         QUERY_LENGTH = 0
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 0
+         COLUMN = 0
+         EDIT_WORD_WRAP = OFF
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$y_coord
+         DATATYPE = NUMBER
+         LENGTH = 3
+         DISPLAY_LENGTH = 3
+         QUERY_LENGTH = 0
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 0
+         COLUMN = 0
+         EDIT_WORD_WRAP = OFF
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$auto_query
+         DATATYPE = CHAR
+         LENGTH = 4
+         DISPLAY_LENGTH = 4
+         QUERY_LENGTH = 4
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 10
+         COLUMN = 1
+         EDIT_WORD_WRAP = OFF
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$insert
+         DATATYPE = CHAR
+         LENGTH = 1
+         DISPLAY_LENGTH = 1
+         QUERY_LENGTH = 0
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 0
+         COLUMN = 0
+         EDIT_WORD_WRAP = OFF
+         DEFAULT = Y
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$delete
+         DATATYPE = CHAR
+         LENGTH = 1
+         DISPLAY_LENGTH = 1
+         QUERY_LENGTH = 0
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 0
+         COLUMN = 0
+         EDIT_WORD_WRAP = OFF
+         DEFAULT = Y
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$update
+         DATATYPE = CHAR
+         LENGTH = 1
+         DISPLAY_LENGTH = 1
+         QUERY_LENGTH = 0
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 0
+         COLUMN = 0
+         EDIT_WORD_WRAP = OFF
+         DEFAULT = Y
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$old_note_no
+         DATATYPE = NUMBER
+         LENGTH = 5
+         DISPLAY_LENGTH = 5
+         QUERY_LENGTH = 0
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 0
+         COLUMN = 0
+         EDIT_WORD_WRAP = OFF
+         DEFAULT = 0
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$new_note_no
+         DATATYPE = NUMBER
+         LENGTH = 5
+         DISPLAY_LENGTH = 5
+         QUERY_LENGTH = 0
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 0
+         COLUMN = 0
+         EDIT_WORD_WRAP = OFF
+         DEFAULT = 0
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+      DEFINE FIELD
+
+         NAME = ctrl$weekmask
+         DATATYPE = CHAR
+         LENGTH = 7
+         DISPLAY_LENGTH = 7
+         QUERY_LENGTH = 7
+         BASE_TABLE = OFF
+         DISPLAYED = OFF
+         PAGE = 0
+         LINE = 8
+         COLUMN = 1
+         EDIT_WORD_WRAP = OFF
+         DEFAULT = YYYYYYY
+         ECHO = OFF
+         INPUT = OFF
+         UPDATE = OFF
+         QUERY = OFF
+
+      ENDDEFINE FIELD
+
+   ENDDEFINE BLOCK
+
+
+   DEFINE SCREEN
+
+   ENDDEFINE SCREEN
+
+ENDDEFINE FORM
+
