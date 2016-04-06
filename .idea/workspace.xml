@@ -33,7 +33,7 @@
         </entry>
       </file>
       <file leaf-file-name="CalDateLib.js" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Node-Angular2-CRM-master/libs/caldate/CalDateLib.js">
+        <entry file="file://$PROJECT_DIR$/Node-Angular2-CRM-master/libs/CalDate/CalDateLib.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="1259">
               <caret line="127" column="0" selection-start-line="127" selection-start-column="0" selection-end-line="127" selection-end-column="0" />
@@ -313,7 +313,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Node-Angular2-CRM-master/libs/caldate/CalDateLib.js">
+    <entry file="file://$PROJECT_DIR$/Node-Angular2-CRM-master/libs/CalDate/CalDateLib.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1259">
           <caret line="127" column="0" selection-start-line="127" selection-start-column="0" selection-end-line="127" selection-end-column="0" />
