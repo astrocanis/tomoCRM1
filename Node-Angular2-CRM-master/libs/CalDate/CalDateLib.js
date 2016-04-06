@@ -54,9 +54,7 @@ function AddDays(day , days, WeekMask ) {
   if (WeekMask) {
     WMask = WeekMask;
   }
-  ;
   for (CurDow = 1; CurDow <= 7; CurDow++) { /* go through mask counting work days */
-//    if (substr(WMask, CurDow, 1) = 'Y') { /* if a weekday, count it*/
     if (WMask.substr(CurDow,1) == 'Y') { /* if a weekday, count it*/
       WorkDaysPerWeek = WorkDaysPerWeek + 1;
     }
@@ -175,7 +173,7 @@ Close Event;
  If the start_date is after the end_date, the NumberWorkDays
  parameter is negative.
  */
-function EventWorkDaysBetween(cal_id,sdt,edt, WeekMask) {}
+function EventWorkDaysBetween(cal_id,sdt,edt, WeekMask) {
 /* Since this suite of routine work with both positive and negative
  days,  the Events cursor has two parameters.  depending on the
  order of the sdt and edt, either (sdt,edt) or (edt,sdt) is passed
@@ -194,7 +192,6 @@ edt          between start_date and end_date)
 and a.event_type_code IN ('DOFF','DON')
 order by a.start_date;
 Ftype EVENTS.event_type_code%TYPE;  /* type of fetched event */
-*/
 
 var Fsdt;                        /* starting date of fetched event
  (potentially modified via
@@ -244,14 +241,10 @@ if (Fedt > Fsdt) {     /* if the range is still valid */
         Prevedt = Fedt;
     }
     Prevsdt = Fsdt;
-    Fetch
-    Evnts
-    into
-    Ftype, Fsdt, Fedt;
-    end
-    loop;
-    Close
-    Evnts;
+    Fetch Evnts
+    into Ftype, Fsdt, Fedt;
+    end loop;
+    Close Evnts;
     if (edt >= Fsdt || edt <= Fedt) {
         EndInside = true;
     else
@@ -329,5 +322,6 @@ function WorkDaysBetween(startdt,enddt,WeekMask) {
     }
     CurDt = CurDt +1;
     }
-days = (NumWork-1) * mult;
+    days = (NumWork-1) * mult;
+    return days;
 }
