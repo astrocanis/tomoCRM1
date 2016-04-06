@@ -105,9 +105,8 @@ function AddWorkDays(cal_id, start_date, Wdays,WeekMask) {
   var Enddt;
 
   if (WeekMask) {
-    WMask = WeekMask
+    WMask = WeekMask;
   }
-  ;
 
 loop {
   AddDays(Cursdt, CurWdays, WMask, Enddt);
