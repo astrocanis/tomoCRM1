@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7c28862a-a5db-4cb0-93ab-070e3eaea9d1" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/copyright/profiles_settings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/dbnavigator.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/deployment.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/jsTestFinder.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/tomoCRM1.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-    </list>
+    <list default="true" id="7c28862a-a5db-4cb0-93ab-070e3eaea9d1" name="Default" comment="" />
     <ignored path="tomoCRM1.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path=".idea/dataSources.local.xml" />
@@ -42,7 +33,7 @@
         </entry>
       </file>
       <file leaf-file-name="CalDateLib.js" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Node-Angular2-CRM-master/libs/CalDate/CalDateLib.js">
+        <entry file="file://$PROJECT_DIR$/Node-Angular2-CRM-master/libs/caldate/CalDateLib.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="1259">
               <caret line="127" column="0" selection-start-line="127" selection-start-column="0" selection-end-line="127" selection-end-column="0" />
@@ -322,7 +313,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Node-Angular2-CRM-master/libs/CalDate/CalDateLib.js">
+    <entry file="file://$PROJECT_DIR$/Node-Angular2-CRM-master/libs/caldate/CalDateLib.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1259">
           <caret line="127" column="0" selection-start-line="127" selection-start-column="0" selection-end-line="127" selection-end-column="0" />
