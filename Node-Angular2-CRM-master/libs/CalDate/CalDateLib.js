@@ -213,9 +213,9 @@ var TotalEvDays = 0;         /* the running total of event
  related work days */
 
 if (edt > sdt) {
-// open Evnts(sdt,edt);
+// open Evnts(sdt,edt);  TODO - Need to create model
 else
-// open Evnts(edt,sdt);
+// open Evnts(edt,sdt);  TODO - Need to create model
 }
 // fetch Evnts into Ftype,Fsdt,Fedt;
 Prevsdt = Fsdt -1;
