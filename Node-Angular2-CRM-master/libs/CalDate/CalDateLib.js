@@ -1,7 +1,7 @@
-/**
+/*
  * Created by astro on 4/5/2016.
  */
-/* AddDays(StartDate,NumberDays,WeekMask,EndDate)
+/** AddDays(StartDate,NumberDays,WeekMask,EndDate)
  *
  *  This procedure adds the specified number of work days to
  *  the passed starting date.  Weekmask determines which days
@@ -24,6 +24,7 @@
  *                            and 'N' = weekend day, 'Y' = week day
  *  EndDate         Date      The resultant end date
  */
+
 function AddDays(day , days, WeekMask ) {
   var NumWorkDays = 0;
   /* Cumultive total for work days */
