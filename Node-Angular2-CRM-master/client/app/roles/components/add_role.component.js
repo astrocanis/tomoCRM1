@@ -1,4 +1,6 @@
-System.register(['angular2/core', '../services/roles.services', 'angular2/router', 'angular2/common'], function(exports_1) {
+System.register(['angular2/core', '../services/roles.services', 'angular2/router', 'angular2/common'], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -65,10 +67,11 @@ System.register(['angular2/core', '../services/roles.services', 'angular2/router
                         selector: 'add_role',
                         template: "\n    <form [ngFormModel]=\"form\" (ngSubmit)=\"onSubmit()\">\n        <p>\n            <label>Role Name:</label>\n            <input type=\"text\" ngControl=\"ROLE_NAME\">\n        </p>\n        <p>\n            <label>Description:</label>\n            <input type=\"text\" ngControl=\"DESCRIPTION\">\n        </p>\n        <p>\n            <button type=\"submit\" [disabled]=\"!form.valid\">Submit</button>\n        </p>\n    </form>"
                     }), 
-                    __metadata('design:paramtypes', [common_1.FormBuilder, roles_services_1.RoleService, router_1.Router])
+                    __metadata('design:paramtypes', [(typeof (_a = typeof common_1.FormBuilder !== 'undefined' && common_1.FormBuilder) === 'function' && _a) || Object, roles_services_1.RoleService, (typeof (_b = typeof router_1.Router !== 'undefined' && router_1.Router) === 'function' && _b) || Object])
                 ], RoleAdd);
                 return RoleAdd;
-            })();
+                var _a, _b;
+            }());
             exports_1("RoleAdd", RoleAdd);
         }
     }

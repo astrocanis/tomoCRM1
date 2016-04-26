@@ -1,4 +1,6 @@
-System.register(['angular2/platform/browser', './app.components', 'angular2/router', 'angular2/http', 'angular2/core', "./utility/localstorage/LocalStorage"], function(exports_1) {
+System.register(['angular2/platform/browser', './app.components', 'angular2/router', 'angular2/http', 'angular2/core', "./utility/localstorage/LocalStorage"], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var browser_1, app_components_1, router_1, http_1, core_1, LocalStorage_1;
     return {
         setters:[

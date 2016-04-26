@@ -24,6 +24,8 @@
  *                            and 'N' = weekend day, 'Y' = week day
  *  EndDate         Date      The resultant end date
  */
+var dbconn = require('../libs/database/database_connection');
+var Promise = require('bluebird');
 
 function AddDays(day , days, WeekMask ) {
   var NumWorkDays = 0;
@@ -120,7 +122,7 @@ loop {
     Cursdt = Cursdt + 1;
   }
   if (!EndInside && (NumWDays = Wdays)) {
-    break
+    break;
   }
   ;
 }
@@ -269,17 +271,15 @@ function GetWeekMask(calendar_id) {
     var WorkDays = 'YYYYYYY';
     var dow;
     /* day of week */
-    Cursor W_D
-    is
-    select description
-    from EVENTS a
-    where a.cal_id = calendar_id
-    and a.event_type_code = 'WMASK';
-
-    BEGIN
-    OPEN W_D;
-    FETCH W_D INTO WorkDays;
-    CLOSE W_D;
+    edit : function(){
+        return new Promise(function (resolve, reject) {
+            dbconn.query("SELECT description from events a where a.cal_id = ? and a.event_type_code = 'WMASK'", calendar_id, function (err, rows) {
+                if(err)
+                    console.log("Error Selecting : %s ", err);
+                return (err ? reject(err) : resolve(rows));
+            });
+        });
+    },
     var weekmask = WorkDays;
 }
     /* WorkDaysBetween(StartDate,EndDate,WeekMask,NumberWorkDays)

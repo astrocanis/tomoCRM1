@@ -1,4 +1,6 @@
-System.register(['rxjs/Observable', 'rxjs/add/operator/share'], function(exports_1) {
+System.register(['rxjs/Observable', 'rxjs/add/operator/share'], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var Observable_1;
     var LocalStorage;
     return {
@@ -37,7 +39,7 @@ System.register(['rxjs/Observable', 'rxjs/add/operator/share'], function(exports
                     this._loggedinObserver.next(this._loggedIn);
                 };
                 return LocalStorage;
-            })();
+            }());
             exports_1("LocalStorage", LocalStorage);
         }
     }

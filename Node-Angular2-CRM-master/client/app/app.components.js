@@ -1,4 +1,6 @@
-System.register(['angular2/core', 'angular2/router', 'angular2/common', './roles/components/role.component', './users/components/user.component', './user_roles/components/user_role.component', './contacts/components/contacts.component', "./login/login.component", './utility/LoggedInOutlets', "./utility/localstorage/LocalStorage", "./users/services/users.services", "./user_roles/services/user_roles.services", "./roles/services/roles.services", "./contacts/services/contacts.services"], function(exports_1) {
+System.register(['angular2/core', 'angular2/router', 'angular2/common', './roles/components/role.component', './users/components/user.component', './user_roles/components/user_role.component', './contacts/components/contacts.component', "./login/login.component", './utility/LoggedInOutlets', "./utility/localstorage/LocalStorage", "./users/services/users.services", "./user_roles/services/user_roles.services", "./roles/services/roles.services", "./contacts/services/contacts.services"], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -111,7 +113,7 @@ System.register(['angular2/core', 'angular2/router', 'angular2/common', './roles
                     __metadata('design:paramtypes', [LocalStorage_1.LocalStorage])
                 ], AppComponent);
                 return AppComponent;
-            })();
+            }());
             exports_1("AppComponent", AppComponent);
         }
     }

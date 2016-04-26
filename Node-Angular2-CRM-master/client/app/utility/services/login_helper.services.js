@@ -1,4 +1,6 @@
-System.register(['rxjs/Rx'], function(exports_1) {
+System.register(['rxjs/Rx'], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var JwtHelper;
     /**
      * Checks for presence of token and that token hasn't expired.
@@ -80,7 +82,7 @@ System.register(['rxjs/Rx'], function(exports_1) {
                     return !(date.valueOf() > (new Date().valueOf() + (offsetSeconds * 1000)));
                 };
                 return JwtHelper;
-            })();
+            }());
             exports_1("JwtHelper", JwtHelper);
         }
     }

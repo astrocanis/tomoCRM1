@@ -1,4 +1,6 @@
-System.register(['angular2/core', 'angular2/common', '../services/users.services', 'angular2/router'], function(exports_1) {
+System.register(['angular2/core', 'angular2/common', '../services/users.services', 'angular2/router'], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -68,10 +70,11 @@ System.register(['angular2/core', 'angular2/common', '../services/users.services
                         directives: [common_1.CORE_DIRECTIVES],
                         template: "\n  <div class=\"page-data\">\n\t<form #f=\"ngForm\" (ngSubmit)=\"onSubmit()\">\n\n\t\t<table cellpadding=\"11\">\n            <tr>\n                <div class=\"label\"> User Name </div>\n                    <input type=\"text\" [value]=\"user?.USERNAME\" [(ngModel)]=\"data.USERNAME\">\n                <br>\n                <br>\n                <div class=\"label\"> Password</div>\n                    <input type=\"text\" [value]=\"user?.PASSWORD\" [(ngModel)]=\"data.PASSWORD\">\n\n                <br>\n                <br>\n                <div class=\"label\"> Active Flag</div>\n                <label *ngFor=\"#item of radioOptions\">\n                    <input type=\"radio\" name=\"ACTIVE_FLAG\" (click)=\"changeActiveValue(item)\"\n                     [checked]=\"item === active_flags\" [value]=\"active_flags\" [(ngModel)]=\"data.ACTIVE_FLAG\">\n                    {{item}}\n                </label>\n                <br>\n                <br>\n            </tr>\n        <p>\n            <button type=\"submit\">Submit</button>\n        </p>\n\t\t</table>\n\t</form>\n  </div>"
                     }), 
-                    __metadata('design:paramtypes', [users_services_1.UserService, router_1.Router, router_1.RouteParams])
+                    __metadata('design:paramtypes', [users_services_1.UserService, (typeof (_a = typeof router_1.Router !== 'undefined' && router_1.Router) === 'function' && _a) || Object, (typeof (_b = typeof router_1.RouteParams !== 'undefined' && router_1.RouteParams) === 'function' && _b) || Object])
                 ], UserEdit);
                 return UserEdit;
-            })();
+                var _a, _b;
+            }());
             exports_1("UserEdit", UserEdit);
         }
     }

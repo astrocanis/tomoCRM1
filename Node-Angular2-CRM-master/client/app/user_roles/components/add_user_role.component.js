@@ -1,4 +1,6 @@
-System.register(['angular2/core', 'angular2/common', '../services/user_roles.services', 'angular2/router'], function(exports_1) {
+System.register(['angular2/core', 'angular2/common', '../services/user_roles.services', 'angular2/router'], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -80,10 +82,11 @@ System.register(['angular2/core', 'angular2/common', '../services/user_roles.ser
                         directives: [common_1.CORE_DIRECTIVES],
                         template: "\n    <form [ngFormModel]=\"form\" (ngSubmit)=\"onSubmit()\">\n        <p>\n            <label>User Name:</label>\n            <select id=\"user-select\" name=\"user_select\" ngControl=\"USER_ID\">\n                <template ngFor #user [ngForOf]=\"users_and_roles\">\n                    <option *ngIf=\"user.TYPE === 'U'\" [value]=\"user.USER_ID\">{{user.VALUE}}</option>\n                </template>\n            </select>\n        </p>\n        <p>\n            <label>Role Name:</label>\n            <select id=\"role-select\" name=\"role_select\" ngControl=\"ROLE_ID\">\n                <template ngFor #user [ngForOf]=\"users_and_roles\">\n                    <option *ngIf=\"user.TYPE === 'R'\" [value]=\"user.USER_ID\">{{user.VALUE}}</option>\n                </template>\n            </select>\n        </p>\n        <p>\n            <button type=\"submit\" [disabled]=\"!form.valid\">Submit</button>\n        </p>\n    </form>"
                     }), 
-                    __metadata('design:paramtypes', [common_2.FormBuilder, user_roles_services_1.UserRoleService, router_1.Router])
+                    __metadata('design:paramtypes', [(typeof (_a = typeof common_2.FormBuilder !== 'undefined' && common_2.FormBuilder) === 'function' && _a) || Object, user_roles_services_1.UserRoleService, (typeof (_b = typeof router_1.Router !== 'undefined' && router_1.Router) === 'function' && _b) || Object])
                 ], UserRoleAdd);
                 return UserRoleAdd;
-            })();
+                var _a, _b;
+            }());
             exports_1("UserRoleAdd", UserRoleAdd);
         }
     }

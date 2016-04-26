@@ -1,4 +1,6 @@
-System.register(['angular2/router', 'angular2/core', './services/login.services', "./../utility/localstorage/LocalStorage"], function(exports_1) {
+System.register(['angular2/router', 'angular2/core', './services/login.services', "./../utility/localstorage/LocalStorage"], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -50,10 +52,11 @@ System.register(['angular2/router', 'angular2/core', './services/login.services'
                         styles: ["\n            .center-vertically{\n                  margin-top: 10%;\n            }\n        "],
                         template: "\n        <div class=\"row center-vertically\">\n            <div class=\"col-md-6 col-md-offset-3\">\n                <div class=\"panel panel-login\">\n                    <div class=\"panel-heading\">\n                        <div class=\"row\">\n                            <div class=\"col-lg-12\">\n                                <a href=\"#\" class=\"active\" id=\"login-form-link\"> Login</a>\n                            </div>\n                        </div>\n                        <div class=\"panel-body\">\n                            <div class=\"row\">\n                                <div class=\"col-lg-12\">\n                                    <form #f=\"ngForm\" (ngSubmit)=\"submitLogin(username.value, password.value)\">\n                                        <div class=\"form-group\">\n                                           <input type=\"text\" #username id=\"username\" tabindex=\"1\" class=\"form-control\" placeholder=\"Username\">\n                                        </div>\n                                        <div class=\"form-group\">\n                                           <input type=\"password\" #password id=\"password\" tabindex=\"2\" class=\"form-control\" placeholder=\"Password\">\n                                        </div>\n                                        <input type=\"submit\" name=\"submit\" value=\"Save\">\n                                    </form>\n                                </div>\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        </div>"
                     }), 
-                    __metadata('design:paramtypes', [login_services_1.LoginService, router_1.Router, LocalStorage_1.LocalStorage])
+                    __metadata('design:paramtypes', [login_services_1.LoginService, (typeof (_a = typeof router_1.Router !== 'undefined' && router_1.Router) === 'function' && _a) || Object, LocalStorage_1.LocalStorage])
                 ], Login);
                 return Login;
-            })();
+                var _a;
+            }());
             exports_1("Login", Login);
         }
     }

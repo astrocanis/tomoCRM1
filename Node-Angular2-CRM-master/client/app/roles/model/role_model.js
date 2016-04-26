@@ -1,4 +1,6 @@
-System.register([], function(exports_1) {
+System.register([], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var Edit_Role, Edit_Role_Module, Edit_Role_NewModule;
     return {
         setters:[],
@@ -11,7 +13,7 @@ System.register([], function(exports_1) {
                     this.ACTIVE_FLAG = obj && obj.ACTIVE_FLAG;
                 }
                 return Edit_Role;
-            })();
+            }());
             exports_1("Edit_Role", Edit_Role);
             Edit_Role_Module = (function () {
                 function Edit_Role_Module(obj) {
@@ -23,14 +25,14 @@ System.register([], function(exports_1) {
                     this.QUERY_ONLY = obj && obj.QUERY_ONLY;
                 }
                 return Edit_Role_Module;
-            })();
+            }());
             exports_1("Edit_Role_Module", Edit_Role_Module);
             Edit_Role_NewModule = (function () {
                 function Edit_Role_NewModule(obj) {
                     this.MODULE_NAME = obj && obj.MODULE_NAME;
                 }
                 return Edit_Role_NewModule;
-            })();
+            }());
             exports_1("Edit_Role_NewModule", Edit_Role_NewModule);
         }
     }

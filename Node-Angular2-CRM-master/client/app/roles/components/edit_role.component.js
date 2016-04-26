@@ -1,4 +1,6 @@
-System.register(['angular2/core', 'angular2/common', '../services/roles.services', 'angular2/router'], function(exports_1) {
+System.register(['angular2/core', 'angular2/common', '../services/roles.services', 'angular2/router'], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -30,7 +32,7 @@ System.register(['angular2/core', 'angular2/common', '../services/roles.services
                 function RoleModule() {
                 }
                 return RoleModule;
-            })();
+            }());
             ModuleEdit = (function () {
                 function ModuleEdit(_roleService, params) {
                     this._roleService = _roleService;
@@ -99,10 +101,11 @@ System.register(['angular2/core', 'angular2/common', '../services/roles.services
                         inputs: ['module'],
                         template: "\n    <table id=\"modules_table\" border=\"1\" cellpadding=\"7\" cellspacing=\"7\" *ngIf=\"module\">\n        <tr>\n            <th width = \"20%\"> Module Name </th>\n            <th width = \"20%\"> Insert </th>\n            <th width = \"20%\"> Update </th>\n            <th width = \"20%\"> Delete </th>\n            <th width = \"20%\"> Query </th>\n        </tr>\n        <tr>\n            <td width = \"20%\"> <div id=\"active_module_id\"></div> {{module?.MODULE_NAME}} </td>\n            <input type=\"hidden\" name=\"active_module\" value=\"{{module?.MODULE_NAME}}\">\n            <td>\n            <input type=\"checkbox\"\n                          [ngModel]=\"module?.INSERT_ALLOWED_FLAG === 'Y' ? true : false\"\n                          (ngModelChange)=\"toggleModules('insert')\" checked>\n            </td>\n\n            <td>\n            <input type=\"checkbox\"\n                          [ngModel]=\"module?.UPDATE_ALLOWED_FLAG === 'Y' ? true : false\"\n                          (ngModelChange)=\"toggleModules('update')\" checked>\n            </td>\n\n            <td>\n            <input type=\"checkbox\"\n                          [ngModel]=\"module?.DELETE_ALLOWED_FLAG === 'Y' ? true : false\"\n                          (ngModelChange)=\"toggleModules('delete')\" checked>\n            </td>\n\n            <td>\n            <input type=\"checkbox\"\n                          [ngModel]=\"module?.QUERY_ONLY === 'Y' ? true : false\"\n                          (ngModelChange)=\"toggleModules('query')\" checked>\n            </td>\n        </tr>\n    </table>        "
                     }), 
-                    __metadata('design:paramtypes', [roles_services_1.RoleService, router_1.RouteParams])
+                    __metadata('design:paramtypes', [roles_services_1.RoleService, (typeof (_a = typeof router_1.RouteParams !== 'undefined' && router_1.RouteParams) === 'function' && _a) || Object])
                 ], ModuleEdit);
                 return ModuleEdit;
-            })();
+                var _a;
+            }());
             NewModuleEdit = (function () {
                 function NewModuleEdit(_roleService, params) {
                     this._roleService = _roleService;
@@ -166,10 +169,11 @@ System.register(['angular2/core', 'angular2/common', '../services/roles.services
                         inputs: ['new_module'],
                         template: "\n    <table id=\"new_modules_table\" border=\"1\" cellpadding=\"7\" cellspacing=\"7\" *ngIf=\"new_module\">\n        <tr>\n            <th width = \"20%\"> Module Name </th>\n            <th width = \"20%\"> Insert </th>\n            <th width = \"20%\"> Update </th>\n            <th width = \"20%\"> Delete </th>\n            <th width = \"20%\"> Query </th>\n        </tr>\n        <tr>\n            <td width = \"20%\"> <div id=\"active_module_id\"></div> {{new_module?.MODULE_NAME}} </td>\n            <input type=\"hidden\" name=\"active_module\" value=\"{{new_module?.MODULE_NAME}}\">\n\n            <td>\n            <input type=\"checkbox\"\n                          [ngModel]=\"new_module?.INSERT_ALLOWED_FLAG === 'Y' ? true : false\"\n                          (ngModelChange)=\"toggleModules('insert')\" checked>\n            </td>\n\n            <td>\n            <input type=\"checkbox\"\n                          [ngModel]=\"new_module?.UPDATE_ALLOWED_FLAG === 'Y' ? true : false\"\n                          (ngModelChange)=\"toggleModules('update')\" checked>\n            </td>\n\n            <td>\n            <input type=\"checkbox\"\n                          [ngModel]=\"new_module?.DELETE_ALLOWED_FLAG === 'Y' ? true : false\"\n                          (ngModelChange)=\"toggleModules('delete')\" checked>\n            </td>\n\n            <td>\n            <input type=\"checkbox\"\n                          [ngModel]=\"new_module?.QUERY_ONLY === 'Y' ? true : false\"\n                          (ngModelChange)=\"toggleModules('query')\" checked>\n            </td>\n        </tr>\n    </table>        "
                     }), 
-                    __metadata('design:paramtypes', [roles_services_1.RoleService, router_1.RouteParams])
+                    __metadata('design:paramtypes', [roles_services_1.RoleService, (typeof (_a = typeof router_1.RouteParams !== 'undefined' && router_1.RouteParams) === 'function' && _a) || Object])
                 ], NewModuleEdit);
                 return NewModuleEdit;
-            })();
+                var _a;
+            }());
             RoleEdit = (function () {
                 function RoleEdit(_roleService, params, router) {
                     this._roleService = _roleService;
@@ -307,10 +311,11 @@ System.register(['angular2/core', 'angular2/common', '../services/roles.services
                         directives: [common_1.CORE_DIRECTIVES, ModuleEdit, NewModuleEdit],
                         templateUrl: 'app/roles/components/edit_role.html'
                     }), 
-                    __metadata('design:paramtypes', [roles_services_1.RoleService, router_1.RouteParams, router_1.Router])
+                    __metadata('design:paramtypes', [roles_services_1.RoleService, (typeof (_a = typeof router_1.RouteParams !== 'undefined' && router_1.RouteParams) === 'function' && _a) || Object, (typeof (_b = typeof router_1.Router !== 'undefined' && router_1.Router) === 'function' && _b) || Object])
                 ], RoleEdit);
                 return RoleEdit;
-            })();
+                var _a, _b;
+            }());
             exports_1("RoleEdit", RoleEdit);
         }
     }

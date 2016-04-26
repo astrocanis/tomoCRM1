@@ -1,4 +1,6 @@
-System.register(['angular2/core', 'angular2/router'], function(exports_1) {
+System.register(['angular2/core', 'angular2/router'], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var __extends = (this && this.__extends) || function (d, b) {
         for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
         function __() { this.constructor = d; }
@@ -103,7 +105,7 @@ System.register(['angular2/core', 'angular2/router'], function(exports_1) {
                     return !(date.valueOf() > (new Date().valueOf() + (offsetSeconds * 1000)));
                 };
                 return JwtHelper;
-            })();
+            }());
             exports_1("JwtHelper", JwtHelper);
             LoggedInRouterOutlet = (function (_super) {
                 __extends(LoggedInRouterOutlet, _super);
@@ -113,7 +115,6 @@ System.register(['angular2/core', 'angular2/router'], function(exports_1) {
                     this.publicRoutes = {};
                 }
                 LoggedInRouterOutlet.prototype.activate = function (instruction) {
-                    //console.log(this.loginHelperService.check_jwt_expiration(localStorage.getItem('jwt')));
                     if (!localStorage.getItem('jwt') || !tokenNotExpired('jwt')) {
                         // todo: redirect to Login, may be there is a better way?
                         if (localStorage.getItem('jwt')) {
@@ -128,10 +129,11 @@ System.register(['angular2/core', 'angular2/router'], function(exports_1) {
                         selector: 'router-outlet'
                     }),
                     __param(3, core_1.Attribute('name')), 
-                    __metadata('design:paramtypes', [core_1.ElementRef, core_1.DynamicComponentLoader, router_1.Router, String])
+                    __metadata('design:paramtypes', [(typeof (_a = typeof core_1.ElementRef !== 'undefined' && core_1.ElementRef) === 'function' && _a) || Object, (typeof (_b = typeof core_1.DynamicComponentLoader !== 'undefined' && core_1.DynamicComponentLoader) === 'function' && _b) || Object, (typeof (_c = typeof router_1.Router !== 'undefined' && router_1.Router) === 'function' && _c) || Object, String])
                 ], LoggedInRouterOutlet);
                 return LoggedInRouterOutlet;
-            })(router_1.RouterOutlet);
+                var _a, _b, _c;
+            }(router_1.RouterOutlet));
             exports_1("LoggedInRouterOutlet", LoggedInRouterOutlet);
         }
     }

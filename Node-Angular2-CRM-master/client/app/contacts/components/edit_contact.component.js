@@ -1,4 +1,6 @@
-System.register(['angular2/core', '../services/contacts.services', 'angular2/router'], function(exports_1) {
+System.register(['angular2/core', '../services/contacts.services', 'angular2/router'], function(exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
     var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -68,10 +70,11 @@ System.register(['angular2/core', '../services/contacts.services', 'angular2/rou
                         selector: 'edit_contact',
                         template: "\n<div class=\"page-data\">\n    <form #f=\"ngForm\" (ngSubmit)=\"submitContactEditForm()\">\n\n\t\t<table cellpadding=\"11\">\n            <tr>\n                <div class=\"label\"> First Name </div>\n                    <input type=\"text\" [value]=\"contact?.FIRST_NAME\" [(ngModel)]=\"contact_submit.FIRST_NAME\">\n                <br>\n                <br>\n                <div class=\"label\"> Last Name</div>\n                    <input type=\"text\" [value]=\"contact?.LAST_NAME\" [(ngModel)]=\"contact_submit.LAST_NAME\">\n\n                <br>\n                <br>\n\n                <div class=\"label\"> Middle Name </div>\n                    <input type=\"text\" [value]=\"contact?.MIDDLE_NAME\" [(ngModel)]=\"contact_submit.MIDDLE_NAME\">\n                <br>\n                <br>\n                <div class=\"label\"> Date of Birth</div>\n                    <input type=\"text\" [value]=\"contact?.DATE_OF_BIRTH\" [(ngModel)]=\"contact_submit.DATE_OF_BIRTH\">\n                <br>\n                <br>\n                <div class=\"label\"> Address Line 1</div>\n                    <input type=\"text\" [value]=\"contact?.LINE1\" [(ngModel)]=\"address_submit.LINE1\">\n\n                <br>\n                <br>\n                <div class=\"label\"> Address Line 2 </div>\n                    <input type=\"text\" [value]=\"contact?.LINE2\" [(ngModel)]=\"address_submit.LINE2\">\n                <br>\n                <br>\n                <div class=\"label\"> City</div>\n                    <input type=\"text\" [value]=\"contact?.CITY\" [(ngModel)]=\"address_submit.CITY\">\n\n                <br>\n                <br>\n                <div class=\"label\"> County</div>\n                    <input type=\"text\" [value]=\"contact?.COUNTY\" [(ngModel)]=\"address_submit.COUNTY\">\n\n                <br>\n                <br>\n\n                <div class=\"label\"> State or Province </div>\n                    <input type=\"text\" [value]=\"contact?.STATE_OR_PROVINCE\" [(ngModel)]=\"address_submit.STATE_OR_PROVINCE\">\n                <br>\n                <br>\n                <div class=\"label\"> Country</div>\n                    <input type=\"text\" [value]=\"contact?.COUNTRY\" [(ngModel)]=\"address_submit.COUNTRY\">\n\n                <br>\n                <br>\n                <div class=\"label\"> Postal Code</div>\n                    <input type=\"text\" [value]=\"contact?.POSTAL_CODE\" [(ngModel)]=\"address_submit.POSTAL_CODE\">\n\n                <br>\n                <br>\n            </tr>\n\t\t</table>\n\t\t<input type=\"submit\" name=\"submit\" value=\"Save\">\n\t</form>\t"
                     }), 
-                    __metadata('design:paramtypes', [contacts_services_1.ContactService, router_1.RouteParams, router_1.Router])
+                    __metadata('design:paramtypes', [contacts_services_1.ContactService, (typeof (_a = typeof router_1.RouteParams !== 'undefined' && router_1.RouteParams) === 'function' && _a) || Object, (typeof (_b = typeof router_1.Router !== 'undefined' && router_1.Router) === 'function' && _b) || Object])
                 ], ContactEdit);
                 return ContactEdit;
-            })();
+                var _a, _b;
+            }());
             exports_1("ContactEdit", ContactEdit);
         }
     }
