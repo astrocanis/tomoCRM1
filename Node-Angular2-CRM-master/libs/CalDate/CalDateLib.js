@@ -279,7 +279,7 @@ function GetWeekMask(calendar_id) {
                 return (err ? reject(err) : resolve(rows));
             });
         });
-    },
+    }
     var weekmask = WorkDays;
 }
     /* WorkDaysBetween(StartDate,EndDate,WeekMask,NumberWorkDays)
