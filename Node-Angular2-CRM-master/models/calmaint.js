@@ -2,6 +2,7 @@
  * Created by tgray on 5/5/2016.
  */
 var dbconn = require('../libs/database/database_connection');
+var moment = require('moment');
 var Promise = require('bluebird');
 
 
@@ -21,7 +22,7 @@ var calmaint = {
     },
 
     /*
-     * This saves new people into the database
+     * This saves new calendar information into the database
      */
     save: function(person_data, address_data){
         var person_promise = new Promise(function(resolve, reject) {
