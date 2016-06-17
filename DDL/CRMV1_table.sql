@@ -13,20 +13,16 @@ CREATE TABLE ADDRESSES (
   CREATED_BY        varchar(75) NOT NULL, 
   DATE_CREATED      timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY   varchar(75), 
-  LAST_UPDATE       timestamp) ENGINE=InnoDB;
+  LAST_UPDATE       timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE ADDRESS_TYPES (
   ID               varchar(75) NOT NULL, 
   TYPE_CODE        varchar(50) NOT NULL, 
   ACTIVE_INDICATOR char(1) DEFAULT 'A' NOT NULL, 
-  CREATED_BY       varchar(75) NOT NULL, 
-  DATE_CREATED     timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-  LAST_UPDATED_BY  varchar(50), 
-  LAST_UPDATE      timestamp) ENGINE=InnoDB;
   CREATED_BY        varchar(75) NOT NULL, 
   DATE_CREATED      timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY   varchar(75), 
-  LAST_UPDATE       timestamp DEFAULT '0000-00-00 00:00:00' NULL) ENGINE=InnoDB;
+  LAST_UPDATE       timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE APPLICATION_COMPONENTS (
   APPLICATION_NAME varchar(30) NOT NULL, 
@@ -55,9 +51,9 @@ CREATE TABLE MESSAGE_MASTER (
   AUDIT_FLAG       varchar(1) NOT NULL, 
   RESPONSE_ROUTING varchar(75), 
   CREATED_BY       varchar(75) NOT NULL, 
-  DATE_CREATED     date NOT NULL, 
+  DATE_CREATED     timestamp default CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATE_BY   varchar(75), 
-  LAST_UPDATE      date, 
+  LAST_UPDATE      timestamp default CURRENT_TIMESTAMP, 
   PRIMARY KEY (MESSAGE_ID)) ENGINE=InnoDB;
 
 CREATE TABLE MODULE_MASTER (
@@ -70,7 +66,7 @@ CREATE TABLE MODULE_MASTER (
   CREATED_BY             varchar(75) NOT NULL, 
   DATE_CREATED           timestamp NOT NULL, 
   LAST_UPDATED_BY        varchar(75), 
-  LAST_UPDATE            timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE            timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE MODULE_NETWORK_MASTER (
   PARENT_MODULE      varchar(255) NOT NULL, 
@@ -85,7 +81,7 @@ CREATE TABLE ORGANIZATIONS (
   CREATED_BY             varchar(75) NOT NULL, 
   DATE_CREATED           timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY        varchar(75), 
-  LAST_UPDATE            timestamp, 
+  LAST_UPDATE            timestamp default CURRENT_TIMESTAMP, 
   PARENT_ORGANIZATION_ID varchar(75) NOT NULL) ENGINE=InnoDB;
 
 CREATE TABLE ORGANIZATION_PERSONS (
@@ -93,11 +89,11 @@ CREATE TABLE ORGANIZATION_PERSONS (
   ORGANIZATION_ID  varchar(75) NOT NULL, 
   PERSON_ID        varchar(75) NOT NULL, 
   ACTIVE_INDICATOR char(1) DEFAULT 'A' NOT NULL, 
-  ORG_POSITION     varchaar(50),
+  ORG_POSITION     varchar(50),
   CREATED_BY       varchar(75) NOT NULL, 
   DATE_CREATED     timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY  varchar(75), 
-  LAST_UPDATE      timestamp) ENGINE=InnoDB;
+  LAST_UPDATE      timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE ORGANIZATION_TYPES (
   ID               varchar(75) NOT NULL, 
@@ -106,7 +102,7 @@ CREATE TABLE ORGANIZATION_TYPES (
   CREATED_BY       varchar(75) NOT NULL, 
   DATE_CREATED     timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY  varchar(75), 
-  LAST_UPDATE      timestamp) ENGINE=InnoDB;
+  LAST_UPDATE      timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE PERSONS (
   ID               varchar(75) NOT NULL, 
@@ -118,20 +114,20 @@ CREATE TABLE PERSONS (
   CREATED_BY       varchar(75) NOT NULL, 
   CREATED_DATE     timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY  varchar(75), 
-  LAST_UPDATE      timestamp) ENGINE=InnoDB;
+  LAST_UPDATE      timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE PERSON_ADDRESSES (
   ID              varchar(75) NOT NULL, 
   ADDRESS_TYPE_ID varchar(75) NOT NULL, 
   PERSON_ID       varchar(75) NOT NULL, 
   ADDRESS_ID      varchar(75) NOT NULL, 
-  PRIMARY         varchar(1) NOT NULL,
+  PRIMARY_FLAG    varchar(1) NOT NULL,
   VALID_FROM      date,
   VALID_TO        date,
   CREATED_BY      varchar(75) NOT NULL, 
-  DATE_CREATED    timestamp NOT NULL, 
+  DATE_CREATED    timestamp default CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY varchar(75), 
-  LAST_UPDATE     timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE     timestamp  default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE ROLES (
   ID                varchar(75) NOT NULL, 
@@ -142,7 +138,7 @@ CREATE TABLE ROLES (
   CREATED_BY        varchar(75) NOT NULL, 
   DATE_CREATED      timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY   varchar(75), 
-  LAST_UPDATE       timestamp) ENGINE=InnoDB;
+  LAST_UPDATE       timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE ROLE_MODULES (
   ROLE_ID             varchar(75) NOT NULL, 
@@ -154,7 +150,7 @@ CREATE TABLE ROLE_MODULES (
   CREATED_BY          varchar(75) NOT NULL, 
   DATE_CREATED        timestamp NOT NULL, 
   LAST_UPDATED_BY     varchar(75), 
-  LAST_UPDATE         timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE         timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE ROLE_MODULE_DETAILS (
   ROLE_ID         varchar(75) NOT NULL, 
@@ -168,7 +164,7 @@ CREATE TABLE ROLE_MODULE_DETAILS (
   CREATED_BY      varchar(75) NOT NULL, 
   DATE_CREATED    timestamp NOT NULL, 
   LAST_UPDATED_BY varchar(75), 
-  LAST_UPDATE     timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE     timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE ROLE_USERS (
   USER_ID     varchar(75) NOT NULL, 
@@ -185,7 +181,7 @@ CREATE TABLE USERS (
   CREATED_BY      varchar(75) NOT NULL, 
   DATE_CREATED    timestamp NOT NULL, 
   LAST_UPDATED_BY varchar(75), 
-  LAST_UPDATE     timestamp) ENGINE=InnoDB;
+  LAST_UPDATE     timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE USER_MODULES (
   USER_ID             varchar(75) NOT NULL, 
@@ -198,7 +194,7 @@ CREATE TABLE USER_MODULES (
   CREATED_BY          varchar(75) NOT NULL, 
   DATE_CREATED        timestamp NOT NULL, 
   LAST_UPDATED_BY     varchar(75), 
-  LAST_UPDATE         timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE         timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE USER_MODULE_DETAILS (
   USER_ID         varchar(75) NOT NULL, 
@@ -212,7 +208,7 @@ CREATE TABLE USER_MODULE_DETAILS (
   CREATED_BY      varchar(75) NOT NULL, 
   DATE_CREATED    timestamp NOT NULL, 
   LAST_UPDATED_BY varchar(75), 
-  LAST_UPDATE     timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE     timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE USER_OPTION_APPLICATION_TYPES (
   APP_TYPE         varchar(30) NOT NULL, 
@@ -226,7 +222,7 @@ CREATE TABLE PERSON_PHONES (
   CREATED_BY      varchar(75) NOT NULL, 
   DATE_CREATED    timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY varchar(75) comment 'D_B', 
-  LAST_UPDATE     timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE     timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE PERSON_SOCIAL_MEDIA (
   ID                   varchar(75) NOT NULL, 
@@ -237,7 +233,7 @@ CREATE TABLE PERSON_SOCIAL_MEDIA (
   CREATED_BY           varchar(75) NOT NULL, 
   DATE_CREATED         timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   LAST_UPDATED_BY      varchar(75), 
-  LAST_UPDATE          timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE          timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE SOCIAL_MEDIA_TYPES (
   ID         varchar(75) NOT NULL, 
@@ -247,11 +243,11 @@ CREATE TABLE ORGANIZATION_ADDRESSES (
   ORGANIZATION_ID varchar(75) NOT NULL, 
   ADDRESS_ID      varchar(75) NOT NULL, 
   ADDRESS_TYPE_ID varchar(75) NOT NULL, 
-  PRIMARY         varchar(1) NOT NULL,
+  PRIMARY_FLAG    varchar(1) NOT NULL,
   CREATED_BY      varchar(75) NOT NULL, 
   DATE_CREATED    timestamp NOT NULL, 
   LAST_UPDATED_BY varchar(75), 
-  LAST_UPDATE     timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE     timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE CALENDAR_EVENTS (
   ID              varchar(75) NOT NULL, 
@@ -267,7 +263,7 @@ CREATE TABLE CALENDAR_EVENTS (
   CREATED_BY      varchar(75) NOT NULL, 
   DATE_CREATED    timestamp NOT NULL, 
   LAST_UPDATED_BY varchar(75), 
-  LAST_UPDATE     timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE     timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE CALENDAR_MASTER (
   ID                        varchar(75) NOT NULL, 
@@ -280,7 +276,7 @@ CREATE TABLE CALENDAR_MASTER (
   CREATED_BY                varchar(75) NOT NULL, 
   DATE_CREATED              timestamp NOT NULL, 
   LAST_UPDATED_BY           varchar(75), 
-  LAST_UPDATE               timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE               timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE PERSON_CALENDARS (
   ID                      varchar(75) NOT NULL, 
@@ -293,7 +289,7 @@ CREATE TABLE PERSON_CALENDARS (
   CREATED_BY              varchar(75) NOT NULL, 
   DATE_CREATED            timestamp NOT NULL, 
   LAST_UPDATED_BY         varchar(75), 
-  LAST_UPDATE             timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE             timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
 
 CREATE TABLE PERSON_CALENDAR_EVENTS (
   ID                  varchar(75) NOT NULL, 
@@ -309,4 +305,4 @@ CREATE TABLE PERSON_CALENDAR_EVENTS (
   CREATED_BY          varchar(75) NOT NULL, 
   DATE_CREATED        timestamp NOT NULL, 
   LAST_UDPATED_BY     varchar(75), 
-  LAST_UPDATE         timestamp NULL) ENGINE=InnoDB;
+  LAST_UPDATE         timestamp default CURRENT_TIMESTAMP) ENGINE=InnoDB;
