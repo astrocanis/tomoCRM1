@@ -176,6 +176,7 @@ create table users (
   username        varchar(75) not null, 
   person_id       varchar(75) not null, 
   password        varchar(30) not null, 
+  password_hint   varchar(30),
   password_date   date not null, 
   active_flag     char(1) default 'y' not null, 
   created_by      varchar(75) not null, 
@@ -267,8 +268,8 @@ create table calendar_events (
 
 create table calendar_master (
   id                        varchar(75) not null, 
-  inherits_from_calendar_id varchar(75) not null, 
-  description               varchar(60), 
+  inherits_from_calendar_id varchar(75), 
+  description               varchar(75) not null, 
   week_mask                 varchar(7) default 'nyyyyyn' not null, 
   default_flag              char(1) default 'n' not null, 
   start_date                date not null, 
