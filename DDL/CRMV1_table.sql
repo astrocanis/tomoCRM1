@@ -3,6 +3,7 @@
 <<<<<<< HEAD
 28/05/201611:32:35 PM - tgray
 */
+/*
 CREATE TABLE ADDRESSES (
 /*  ID                varchar(30) NOT NULL, 
 =======
