@@ -1,8 +1,15 @@
 /*
 <<<<<<< HEAD
+<<<<<<< HEAD
 28/05/201611:32:35 PM - tgray
 =======
 08/06/201611:30:55 PM - tgray
+>>>>>>> develop
+=======
+08/06/201611:30:55 PM - tgray
+=======
+28/05/201611:32:35 PM - tgray
+>>>>>>> master
 >>>>>>> develop
 */
 alter table person_addresses add index person_addresses_ibfk_1 (person_id), add constraint person_addresses_ibfk_1 foreign key (person_id) references persons (id) on update no action on delete no action;
